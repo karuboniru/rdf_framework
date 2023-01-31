@@ -1,0 +1,88 @@
+{
+  "files": [
+    "/media/storage/neutrino/nuwro_data/mhtest/minerva_ghent_alter_blending/1/cc.rootracker.root"
+  ],
+  "treename": "nRooTracker",
+  "plugins": [
+    {
+      "name": "TKI",
+      "plugin": "libnuwroTKI.so",
+      "preprocess": "pre",
+      "analysis": [
+        {
+          "treename": "treeout",
+          "filename": "MINERvAGFSPIZERO.root",
+          "plot_file": "MINERvAGFSPIZEROplot.root",
+          "func": "MINERvAGFSPIZERO",
+          "output": [
+            "dalphat",
+            "IApN",
+            "dphit",
+            "dpt"
+          ],
+          "plots": [
+            {
+              "var": "dalphat",
+              "name": "dalphat",
+              "xmin": 0,
+              "xmax": 0,
+              "bins": 128,
+              "cut": ""
+            },
+            {
+              "var": "IApN",
+              "name": "IApN",
+              "xmin": 0,
+              "xmax": 0,
+              "bins": 128,
+              "cut": ""
+            }
+          ],
+          "stack_plots": [
+            {
+              "var": "dalphat",
+              "name": "dalphat",
+              "xmin": 0,
+              "xmax": 0,
+              "bins": 128,
+              "cuts": [
+                "W < 1.4",
+                "W > 1.4"
+              ]
+            }
+          ]
+        },
+        {
+          "treename": "treeout",
+          "filename": "MINERvAGFS0PI.root",
+          "plot_file": "MINERvAGFS0PIplot.root",
+          "func": "MINERvAGFS0PI",
+          "output": [
+            "dalphat",
+            "IApN",
+            "dphit",
+            "dpt"
+          ],
+          "plots": [
+            {
+              "var": "dalphat",
+              "name": "dalphat",
+              "xmin": 0,
+              "xmax": 0,
+              "bins": 128,
+              "cut": ""
+            },
+            {
+              "var": "IApN",
+              "name": "IApN",
+              "xmin": 0,
+              "xmax": 0,
+              "bins": 128,
+              "cut": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

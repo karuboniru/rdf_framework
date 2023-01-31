@@ -1,0 +1,44 @@
+{
+  "files": [
+    "/dybfs/users/chengjie/data/GENIE/GENIE3.0.6-wDeex/useroutput_wdeex.root"
+  ],
+  "treename": "atmgen",
+  "plot_file": "plot.root",
+  "plugins": [
+    {
+      "name": "Generator",
+      "plugin": "libmuon_p.so",
+      "analysis": [
+        {
+          "treename": "treeout",
+          "filename": "muon_kin.root",
+          "func": "analysis",
+          "output": [
+            "muon_p",
+            "muon_e",
+            "leading_muon_e",
+            "leading_muon_p"
+          ],
+          "plots": [
+            {
+              "var": "leading_muon_p",
+              "name": "leading_muon_p",
+              "xmin": 0,
+              "xmax": 0,
+              "bins": 128,
+              "cut": "leading_muon_p>0.2"
+            },
+            {
+              "var": "leading_muon_p",
+              "name": "leading_muon_p_another",
+              "xmin": 0,
+              "xmax": 0,
+              "bins": 128,
+              "cut": "dummy_cut"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
