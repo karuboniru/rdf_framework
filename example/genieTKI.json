@@ -1,0 +1,83 @@
+{
+  "files": [
+    "/media/storage/neutrino/nuwro_data/mhtest/minerva_ghent_alter_blending/1/cc.rootracker.root"
+  ],
+  "treename": "gRooTracker",
+  "plugins": [
+    {
+      "name": "TKI",
+      "plugin": "/home/yan/codes/RDF_Framework/build/libgenieTKI.so",
+      "preprocess": "pre",
+      "normalize": {
+        "func": "normalize_factor_CC",
+        "parameters": [
+          "/home/yan/neutrino/GENIE/spline/G18_10b_02_11b/o.root",
+          "nu_mu_C12/tot_cc",
+          "12"
+        ]
+      },
+      "analysis": [
+        {
+          "treename": "treeout",
+          "filename": "MINERvAGFSPIZERO.root",
+          "plot_file": "MINERvAGFSPIZEROplot.root",
+          "func": "MINERvAGFSPIZERO",
+          "output": [
+            "dalphat",
+            "IApN",
+            "dphit",
+            "dpt"
+          ],
+          "plots": [
+            {
+              "var": "dalphat",
+              "name": "dalphat",
+              "xmin": 0,
+              "xmax": 0,
+              "bins": 128,
+              "cut": ""
+            },
+            {
+              "var": "IApN",
+              "name": "IApN",
+              "xmin": 0,
+              "xmax": 0,
+              "bins": 128,
+              "cut": ""
+            }
+          ]
+        },
+        {
+          "treename": "treeout",
+          "filename": "MINERvAGFS0PI.root",
+          "plot_file": "MINERvAGFS0PIplot.root",
+          "func": "MINERvAGFS0PI",
+          "output": [
+            "dalphat",
+            "IApN",
+            "dphit",
+            "dpt"
+          ],
+          "plots": [
+            {
+              "var": "dalphat",
+              "name": "dalphat",
+              "xmin": 0,
+              "xmax": 0,
+              "bins": 128,
+              "cut": ""
+            },
+            {
+              "var": "IApN",
+              "name": "IApN",
+              "xmin": 0,
+              "xmax": 0,
+              "bins": 128,
+              "cut": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

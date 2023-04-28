@@ -1,7 +1,6 @@
 {
   "files": [
-    "/media/storage/neutrino/GENIE/simple_flux_check/atmo/1/small.gtrac.root",
-    "/media/storage/neutrino/GENIE/simple_flux_check/atmo/2/small.gtrac.root"
+    "/media/storage/neutrino/GENIE/simple_flux_check/atmo/*/*.gtrac.root"
   ],
   "treename": "gRooTracker",
   "plugins": [
@@ -13,7 +12,8 @@
         "func": "normalize_factor_CC",
         "parameters": [
           "/media/storage/neutrino/GENIE/atmo/G18_10b_02_11b.root",
-          "nu_mu_C12/tot_cc"
+          "nu_mu_C12/tot_cc",
+          "12"
         ]
       },
       "analysis": [
@@ -22,6 +22,33 @@
           "filename": "kaon_kin.root",
           "plot_file": "plot_kaon.root",
           "func": "kaon_kin",
+          "output": [
+            "kaonE",
+            "leading_kaon_e",
+            "12"
+          ],
+          "plots": [
+            {
+              "var": "kaonE",
+              "name": "kaonE",
+              "xmin": 0,
+              "xmax": 1.0,
+              "bins": 25
+            },
+            {
+              "var": "leading_kaon_e",
+              "name": "leading_kaon_e",
+              "xmin": 0,
+              "xmax": 1.0,
+              "bins": 25
+            }
+          ]
+        },
+        {
+          "treename": "treeout",
+          "filename": "kaon_kin_beforefsi.root",
+          "plot_file": "plot_kaon_beforefsi.root",
+          "func": "kaon_kin_beforefsi",
           "output": [
             "kaonE",
             "leading_kaon_e"

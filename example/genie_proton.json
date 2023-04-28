@@ -1,0 +1,84 @@
+{
+  "files": [
+    "./*/*.gtrac.root"
+  ],
+  "treename": "gRooTracker",
+  "plugins": [
+    {
+      "name": "plot_kaon",
+      "plugin": "/home/yan/codes/RDF_Framework/build/libgenie_proton.so",
+      "preprocess": "CC_selection",
+      "normalize": {
+        "func": "normalize_factor_CC",
+        "parameters": [
+          "/media/storage/neutrino/GENIE/atmo/G18_10b_02_11b.root",
+          "nu_mu_C12/tot_cc",
+          "12"
+        ]
+      },
+      "analysis": [
+        {
+          "treename": "treeout",
+          "filename": "proton_kin.root",
+          "plot_file": "plot_proton.root",
+          "func": "proton_kin",
+          "output": [
+            "proton_P",
+            "leading_proton_p",
+            "nonleading_proton_e"
+          ],
+          "plots": [
+            {
+              "var": "proton_P",
+              "name": "proton_P",
+              "xmin": 0,
+              "xmax": 1.0,
+              "bins": 100
+            },
+            {
+              "var": "leading_proton_p",
+              "name": "leading_proton_p",
+              "xmin": 0,
+              "xmax": 1.0,
+              "bins": 100
+            }
+          ]
+        },
+        {
+          "treename": "treeout",
+          "filename": "proton_kin_beforefsi.root",
+          "plot_file": "plot_proton_beforefsi.root",
+          "func": "kaon_kin_beforefsi",
+          "output": [
+            "proton_P",
+            "leading_proton_p",
+            "nonleading_proton_e"
+          ],
+          "plots": [
+            {
+              "var": "proton_P",
+              "name": "proton_P",
+              "xmin": 0,
+              "xmax": 1.0,
+              "bins": 100
+            },
+            {
+              "var": "leading_proton_p",
+              "name": "leading_proton_p",
+              "xmin": 0,
+              "xmax": 1.0,
+              "bins": 100
+            },
+            {
+              "var": "nonleading_proton_e",
+              "name": "nonleading_proton_e",
+              "xmin": 0,
+              "xmax": 1.0,
+              "bins": 100
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

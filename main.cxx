@@ -5,11 +5,13 @@
 #include <THStack.h>
 #include <TROOT.h>
 #include <dlfcn.h>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <regex>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,6 +68,45 @@ TH1 *draw_hists(ROOT::RDF::RNode node, std::string var, std::string name,
   return (TH1 *)hist;
 }
 
+std::vector<std::string> expand_wildcard_path(std::string input) {
+  std::vector<std::string> ret;
+  auto pos_star = input.find("*");
+  if (pos_star != std::string::npos) {
+    auto slash_before_star = input.rfind("/", pos_star);
+    auto slash_after_star = input.find("/", pos_star);
+    auto dir = input.substr(0, slash_before_star);
+    auto pattern = input.substr(slash_before_star + 1,
+                                (slash_after_star - slash_before_star - 1));
+    // convert * to .*
+    pattern = std::regex_replace(pattern, std::regex("\\*"), ".*");
+    for (const auto &entry : std::filesystem::directory_iterator(dir)) {
+      // std::cout << "matching " << entry.path().filename().string() << " to "
+      //           << pattern << std::endl;
+      if (std::regex_match(entry.path().filename().string(),
+                           std::regex(pattern))) {
+        if (slash_after_star != std::string::npos) {
+          if (!entry.is_directory()) {
+            continue;
+          }
+          auto following_path = input.substr(slash_after_star + 1);
+          auto thispath = entry.path().string() + "/" + following_path;
+          if (thispath.find("*") != std::string::npos) {
+            auto subpaths = expand_wildcard_path(thispath);
+            ret.insert(ret.end(), subpaths.begin(), subpaths.end());
+          } else if (std::filesystem::exists(thispath)) {
+            ret.push_back(thispath);
+          }
+        } else {
+          ret.push_back(entry.path().string());
+        }
+      }
+    }
+  } else {
+    ret.push_back(input);
+  }
+  return ret;
+}
+
 int main(int argc, char **argv) {
   ROOT::EnableImplicitMT();
   if (argc < 2) {
@@ -79,7 +120,16 @@ int main(int argc, char **argv) {
     json_file >> j;
   }
 
-  ROOT::RDataFrame df(j["treename"].get<std::string>(), j["files"]);
+  std::vector<std::string> file_paths{};
+  for (auto &file : j["files"]) {
+    auto expanded_paths = expand_wildcard_path(file);
+    file_paths.insert(file_paths.end(), expanded_paths.begin(),
+                      expanded_paths.end());
+  }
+  // for (auto &file : file_paths) {
+  //   std::cout << "Adding file " << file << std::endl;
+  // }
+  ROOT::RDataFrame df(j["treename"].get<std::string>(), file_paths);
   auto rootnode = ROOT::RDF::AsRNode(df);
 
   for (auto &entry : j["plugins"]) {
@@ -152,23 +202,16 @@ int main(int argc, char **argv) {
         double xmin = plotentry.value("xmin", 0);
         double xmax = plotentry.value("xmax", 0);
         int nbins = plotentry.value("nbins", 128);
-        std::string cut = plotentry.value("cut", "");
+        // std::string cut = plotentry.value("cut", "");
         THStack *stack = new THStack((name + "hs").c_str(), var.c_str());
         for (auto &cutentry : plotentry["cuts"]) {
           // objs_list.emplace_back();
           auto hist = draw_hists(result_node, var, name, xmin, xmax, nbins,
                                  handle, norm_factor, cutentry);
           stack->Add(hist);
-          // delete hist;
-          // objs_list.emplace_back(stack);
         }
         stack->Write();
       }
-      // for (auto &obj : objs_list) {
-      //   // obj->SetDirectory(plots_file.get());
-      //   // plots_file->Append(obj);
-      //   obj->Write();
-      // }
       plots_file->Write();
       plots_file->Close();
     }

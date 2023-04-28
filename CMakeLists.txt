@@ -16,13 +16,21 @@ add_library(muon_p SHARED example/muon_p.cxx)
 add_library(nuwroTKI SHARED example/nuwroTKI.cxx)
 add_library(nuwrotoy SHARED example/nuwrotoy.cxx)
 add_library(genie_kaon SHARED example/genie_kaon.cxx)
+add_library(genie_proton SHARED example/genie_proton.cxx)
+add_library(genieTKI SHARED example/genieTKI.cxx)
 target_link_libraries(muon_p ROOT::Physics ROOT::ROOTDataFrame)
 target_link_libraries(nuwroTKI ROOT::Physics ROOT::ROOTDataFrame)
 target_link_libraries(nuwrotoy ROOT::Physics ROOT::ROOTDataFrame)
 target_link_libraries(genie_kaon ROOT::Physics ROOT::ROOTDataFrame)
+target_link_libraries(genie_proton ROOT::Physics ROOT::ROOTDataFrame)
+target_link_libraries(genieTKI ROOT::Physics ROOT::ROOTDataFrame)
 
 
 
 add_executable(main main.cxx)
 target_link_libraries(main ROOT::ROOTDataFrame nlohmann_json::nlohmann_json ${CMAKE_DL_LIBS})
 install(TARGETS main DESTINATION bin)
+
+add_executable(gibuu_final_2_root gibuu_final_2_root.cxx)
+target_link_libraries(gibuu_final_2_root ROOT::Tree ${CMAKE_DL_LIBS})
+install(TARGETS gibuu_final_2_root DESTINATION bin)
