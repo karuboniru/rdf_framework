@@ -1,0 +1,49 @@
+{
+  "files": [
+    "/media/storage/neutrino/GENIE/simple_flux_check/atmo/*/*.gtrac.root"
+  ],
+  "treename": "gRooTracker",
+  "plugins": [
+    {
+      "name": "plot_pion",
+      "plugin": "libgenie_pion.so",
+      "preprocess": "CC_selection",
+      "normalize": {
+        "func": "normalize_factor_CC",
+        "parameters": [
+          "/media/storage/neutrino/GENIE/atmo/G18_10b_02_11b.root",
+          "nu_mu_C12/tot_cc",
+          "12"
+        ]
+      },
+      "analysis": [
+        {
+          "treename": "treeout",
+          "filename": "pion_kin.root",
+          "plot_file": "plot_pion.root",
+          "func": "pion_kin",
+          "output": [
+            "pionE",
+            "piontheta"
+          ],
+          "plots": [
+            {
+              "var": "pionE",
+              "name": "pionE",
+              "xmin": 0,
+              "xmax": 1.0,
+              "bins": 25
+            },
+            {
+              "var": "piontheta",
+              "name": "piontheta",
+              "xmin": 0,
+              "xmax": 1.0,
+              "bins": 25
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
