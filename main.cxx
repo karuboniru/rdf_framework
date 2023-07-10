@@ -187,8 +187,8 @@ int main(int argc, char **argv) {
       for (auto &plotentry : analysis_entry["plots"]) {
         std::string var = plotentry["var"];
         std::string name = plotentry["name"];
-        double xmin = plotentry.value("xmin", 0);
-        double xmax = plotentry.value("xmax", 0);
+        double xmin = plotentry.value("xmin", 0.0);
+        double xmax = plotentry.value("xmax", 0.0);
         int nbins = plotentry.value("nbins", 128);
         std::string cut = plotentry.value("cut", "");
         draw_hists(result_node, var, name, xmin, xmax, nbins, handle,
