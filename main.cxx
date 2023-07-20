@@ -44,7 +44,7 @@ std::string funcname_mangle_with_parameter(std::string funcname) {
 
 TH1 *draw_hists(ROOT::RDF::RNode node, std::string var, std::string name,
                 double xmin, double xmax, int nbins, void *handle, double norm,
-                std::string cut = "") {
+                std::string cut = "", std::string wname = "") {
   if (!cut.empty()) {
     analysis_func_t func =
         (analysis_func_t)(dlsym(handle, funcname_mangle(cut).c_str()));
@@ -54,12 +54,19 @@ TH1 *draw_hists(ROOT::RDF::RNode node, std::string var, std::string name,
       node = node.Filter(cut);
     }
   }
-  auto hist = (TH1D *)node
-                  .Histo1D(ROOT::RDF::TH1DModel{name.c_str(), var.c_str(),
-                                                nbins, xmin, xmax},
-                           var)
-                  .GetPtr()
-                  ->Clone();
+  auto hist = wname.empty()
+                  ? (TH1D *)node
+                        .Histo1D(ROOT::RDF::TH1DModel{name.c_str(), var.c_str(),
+                                                      nbins, xmin, xmax},
+                                 var)
+                        .GetPtr()
+                        ->Clone()
+                  : (TH1D *)node
+                        .Histo1D(ROOT::RDF::TH1DModel{name.c_str(), var.c_str(),
+                                                      nbins, xmin, xmax},
+                                 var, wname)
+                        .GetPtr()
+                        ->Clone();
   auto hist_int = hist->Integral();
   if (norm && hist_int) { // if we have a normalization factor and hist
                           // is not empty
@@ -162,7 +169,7 @@ int main(int argc, char **argv) {
                   << "': " << dlerror() << std::endl;
         continue;
       }
-      norm_factor = func(preprocessed_node, normalize_conf["parameters"]);
+      norm_factor = func(rootnode, normalize_conf["parameters"]);
       std::cout << "Normalization: " << norm_factor << std::endl;
     }
 
@@ -191,8 +198,9 @@ int main(int argc, char **argv) {
         double xmax = plotentry.value("xmax", 0.0);
         int nbins = plotentry.value("nbins", 128);
         std::string cut = plotentry.value("cut", "");
+        std::string wname = plotentry.value("wname", "");
         draw_hists(result_node, var, name, xmin, xmax, nbins, handle,
-                   norm_factor, cut)
+                   norm_factor, cut, wname)
             ->SetDirectory(plots_file.get());
       }
       plots_file->cd();
@@ -202,12 +210,13 @@ int main(int argc, char **argv) {
         double xmin = plotentry.value("xmin", 0);
         double xmax = plotentry.value("xmax", 0);
         int nbins = plotentry.value("nbins", 128);
+        std::string wname = plotentry.value("wname", "");
         // std::string cut = plotentry.value("cut", "");
         THStack *stack = new THStack((name + "hs").c_str(), var.c_str());
         for (auto &cutentry : plotentry["cuts"]) {
           // objs_list.emplace_back();
           auto hist = draw_hists(result_node, var, name, xmin, xmax, nbins,
-                                 handle, norm_factor, cutentry);
+                                 handle, norm_factor, cutentry, wname);
           stack->Add(hist);
         }
         stack->Write();

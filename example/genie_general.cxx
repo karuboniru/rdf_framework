@@ -13,7 +13,6 @@ std::unique_ptr<T> get_object(std::string file_path, std::string obj_path) {
   return std::unique_ptr<T>{objptr};
 }
 
-
 ROOT::RDF::RNode CC_selection(ROOT::RDF::RNode df) {
   return df
       .Filter([](TObjString &str) { return str.GetString().Contains("CC"); },
@@ -32,7 +31,6 @@ ROOT::RDF::RNode CC_selection(ROOT::RDF::RNode df) {
               },
               {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus"});
 }
-
 
 std::pair<double, double> get_xsec(TH1 *h_rate, TGraph *spline) {
   double fluxint{};
@@ -57,7 +55,7 @@ std::pair<double, double> get_xsec(TH1 *h_rate, TGraph *spline) {
 
 double normalize_factor_CC(ROOT::RDF::RNode df,
                            std::vector<std::string> parameters) {
-  auto h = df.Histo1D({"", "", 256, 0, 0}, "neutrinoE");
+  auto h = CC_selection(df).Histo1D({"", "", 256, 0, 0}, "neutrinoE");
   auto filename = parameters[0];
   auto obj_path = parameters[1];
   auto Z = std::stoi(parameters[2]);

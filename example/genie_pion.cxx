@@ -24,12 +24,6 @@ ROOT::RDF::RNode pion_kin(ROOT::RDF::RNode df) {
                 return pions;
               },
               {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus"})
-      .Define("p4_neutrino",
-              [](ROOT::RVec<double> &StdHepP4) {
-                return TLorentzVector{StdHepP4[0], StdHepP4[1], StdHepP4[2],
-                                      StdHepP4[3]};
-              },
-              {"StdHepP4"})
       .Define("pionE",
               [](const ROOT::RVec<TLorentzVector> &pions) {
                 ROOT::RVec<double> pionE;
@@ -39,6 +33,12 @@ ROOT::RDF::RNode pion_kin(ROOT::RDF::RNode df) {
                 return pionE;
               },
               {"pions"})
+      .Define("p4_neutrino",
+              [](ROOT::RVec<double> &StdHepP4) {
+                return TLorentzVector{StdHepP4[0], StdHepP4[1], StdHepP4[2],
+                                      StdHepP4[3]};
+              },
+              {"StdHepP4"})
       .Define("piontheta",
               [](const ROOT::RVec<TLorentzVector> &pions,
                  const TLorentzVector &p4_neutrino) {

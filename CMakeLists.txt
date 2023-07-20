@@ -14,9 +14,10 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/example/include
 )
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -Wall -Wextra -Wpedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -O3 -march=native -Wall -Wextra -Wpedantic")
 
 add_library(genie_general OBJECT example/genie_general.cxx)
+add_library(tki_general OBJECT example/tki_general.cxx)
 
 add_library(muon_p SHARED example/muon_p.cxx)
 add_library(nuwroTKI SHARED example/nuwroTKI.cxx)
@@ -26,12 +27,12 @@ add_library(genie_pion SHARED example/genie_pion.cxx)
 add_library(genie_proton SHARED example/genie_proton.cxx)
 add_library(genieTKI SHARED example/genieTKI.cxx)
 target_link_libraries(muon_p ROOT::Physics ROOT::ROOTDataFrame)
-target_link_libraries(nuwroTKI ROOT::Physics ROOT::ROOTDataFrame)
+target_link_libraries(nuwroTKI ROOT::Physics ROOT::ROOTDataFrame tki_general)
 target_link_libraries(nuwrotoy ROOT::Physics ROOT::ROOTDataFrame)
 target_link_libraries(genie_kaon ROOT::Physics ROOT::ROOTDataFrame genie_general)
 target_link_libraries(genie_pion ROOT::Physics ROOT::ROOTDataFrame genie_general)
 target_link_libraries(genie_proton ROOT::Physics ROOT::ROOTDataFrame genie_general)
-target_link_libraries(genieTKI ROOT::Physics ROOT::ROOTDataFrame genie_general)
+target_link_libraries(genieTKI ROOT::Physics ROOT::ROOTDataFrame genie_general tki_general)
 
 
 
