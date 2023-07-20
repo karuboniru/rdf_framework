@@ -4,7 +4,9 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 set(CMAKE_CXX_STANDARD 17)
 add_compile_options(-fconcepts)
-find_package(nlohmann_json 3.2.0 REQUIRED)
+include(FetchContent)
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz)
+FetchContent_MakeAvailable(json)
 find_package(ROOT REQUIRED)
 include("${ROOT_USE_FILE}")
 include_directories(
