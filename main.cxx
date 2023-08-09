@@ -75,6 +75,43 @@ TH1 *draw_hists(ROOT::RDF::RNode node, std::string var, std::string name,
   return (TH1 *)hist;
 }
 
+TH1 *draw_hists_2d(ROOT::RDF::RNode node, std::string varx, std::string vary,
+                   std::string name, double xmin, double xmax, double ymin,
+                   double ymax, int nbinsx, int nbinsy, void *handle,
+                   double norm, std::string cut = "", std::string wname = "") {
+  if (!cut.empty()) {
+    analysis_func_t func =
+        (analysis_func_t)(dlsym(handle, funcname_mangle(cut).c_str()));
+    if (func) {
+      node = func(node);
+    } else {
+      node = node.Filter(cut);
+    }
+  }
+  auto hist =
+      wname.empty()
+          ? (TH2D *)node
+                .Histo2D(ROOT::RDF::TH2DModel{name.c_str(), varx.c_str(),
+                                              nbinsx, xmin, xmax, nbinsy, ymin,
+                                              ymax},
+                         varx, vary)
+                .GetPtr()
+                ->Clone()
+          : (TH2D *)node
+                .Histo2D(ROOT::RDF::TH2DModel{name.c_str(), varx.c_str(),
+                                              nbinsx, xmin, xmax, nbinsy, ymin,
+                                              ymax},
+                         varx, vary, wname)
+                .GetPtr()
+                ->Clone();
+  auto hist_int = hist->Integral();
+  if (norm && hist_int) { // if we have a normalization factor and hist
+                          // is not empty
+    hist->Scale(norm, "WIDTH");
+  }
+  return (TH2 *)hist;
+}
+
 std::vector<std::string> expand_wildcard_path(std::string input) {
   std::vector<std::string> ret;
   auto pos_star = input.find("*");
@@ -220,6 +257,22 @@ int main(int argc, char **argv) {
           stack->Add(hist);
         }
         stack->Write();
+      }
+      for (auto &plot_2d_entry : analysis_entry["plot_2d"]) {
+        std::string varx = plot_2d_entry["varx"];
+        std::string vary = plot_2d_entry["vary"];
+        std::string name = plot_2d_entry["name"];
+        double xmin = plot_2d_entry.value("xmin", 0.0);
+        double xmax = plot_2d_entry.value("xmax", 0.0);
+        double ymin = plot_2d_entry.value("ymin", 0.0);
+        double ymax = plot_2d_entry.value("ymax", 0.0);
+        int nbinsx = plot_2d_entry.value("nbinsx", 128);
+        int nbinsy = plot_2d_entry.value("nbinsy", 128);
+        std::string cut = plot_2d_entry.value("cut", "");
+        std::string wname = plot_2d_entry.value("wname", "");
+        draw_hists_2d(result_node, varx, vary, name, xmin, xmax, ymin, ymax,
+                      nbinsx, nbinsy, handle, norm_factor, cut, wname)
+            ->SetDirectory(plots_file.get());
       }
       plots_file->Write();
       plots_file->Close();
