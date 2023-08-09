@@ -1,0 +1,24 @@
+{
+  "files": [
+    "/home/yan/neutrino/juno/sample_detsim.root"
+  ],
+  "treename": "Event/Sim/SimEvt",
+  "plugins": [
+    {
+      "name": "process",
+      "plugin": "/home/yan/code/rdf_framework_juno/build/lib/libSimHeadTest.so",
+      "analysis": [
+        {
+          "treename": "treeout",
+          "filename": "process.root",
+          "plot_file": "plot_kaon.root",
+          "func": "process",
+          "output": [
+            "NNVTHits",
+            "trackPDG"
+          ]
+        }
+      ]
+    }
+  ]
+}
