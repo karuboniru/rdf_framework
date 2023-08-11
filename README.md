@@ -75,13 +75,43 @@ This is the compoments of a configuration file, for more details please check th
 ## Analysis plugin
 The analysis plugin is a shared library that can be build standalone or with the help of `cmake`. The plugin should contain several function with the following signature:
 ```C++
-ROOT::RDF::RNode func_name(ROOT::RDF::RNode df);
+class Name : ProcessNodeI{
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return df/*whatever*/;
+  }
+  void configure (const nlohmann::json &conf) override {
+    /* do read information from config */
+  }
+};
+REGISTER_PROCESS_NODE(Name)
 ```
 
 For a normalize function, the signature should be:
 ```C++
-double normalize_factor(ROOT::RDF::RNode df,
-                           std::vector<std::string> parameters);
+class NAME : public NormalizeI {
+public:
+  double operator()(ROOT::RDF::RNode df) override {
+    // return normalization factor
+  }
+
+  void configure(const nlohmann::json &conf) override {
+  }
+};
+REGISTER_NORMALIZE(NAME)
 ```
 
 All cuts and analysis is done in the way of mutating the `RNode` and return it. You can find documentation of `RNode` [here](https://root.cern/doc/master/classROOT_1_1RDataFrame.html). Or read given code in `example/muon_p.cxx` and its comment.
+
+To give configuration, when specifying `"func": "analysis"` do 
+```json
+"func": {
+  "name": "normalize_factor_cc",
+  "config": {
+    "filename": "/media/storage/neutrino/GENIE/atmo/G18_10b_02_11b.root",
+    "obj_path":"nu_mu_C12/tot_cc",
+    "Z": 12
+  }
+}
+```
+instead, whatever in `"config"` will be passed to configure before the actual mutation is called.
