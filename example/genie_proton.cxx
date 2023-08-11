@@ -5,6 +5,7 @@
 #include <TLorentzVector.h>
 #include <TObjString.h>
 #include <TSpline.h>
+#include <common.h>
 #include <genie_general.h>
 
 ROOT::RDF::RNode define_variable(ROOT::RDF::RNode df) {
@@ -64,161 +65,26 @@ ROOT::RDF::RNode define_variable(ROOT::RDF::RNode df) {
               {"proton_P"});
 }
 
-ROOT::RDF::RNode proton_kin(ROOT::RDF::RNode df) {
-  return define_variable(df.Define(
-      "protons",
-      [](int StdHepN, ROOT::RVec<double> &StdHepP4, ROOT::RVec<int> &StdHepPdg,
-         ROOT::RVec<int> &StdHepStatus) {
-        ROOT::RVec<std::pair<TLorentzVector, int>> protons;
-        for (int i = 0; i < StdHepN; i++) {
-          if (StdHepPdg[i] == 2212 && StdHepStatus[i] == 1) {
-            protons.emplace_back(
-                TLorentzVector{StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
-                               StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]},
-                i);
+class proton_kin : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return define_variable(df.Define(
+        "protons",
+        [](int StdHepN, ROOT::RVec<double> &StdHepP4,
+           ROOT::RVec<int> &StdHepPdg, ROOT::RVec<int> &StdHepStatus) {
+          ROOT::RVec<std::pair<TLorentzVector, int>> protons;
+          for (int i = 0; i < StdHepN; i++) {
+            if (StdHepPdg[i] == 2212 && StdHepStatus[i] == 1) {
+              protons.emplace_back(
+                  TLorentzVector{StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
+                                 StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]},
+                  i);
+            }
           }
-        }
-        return protons;
-      },
-      {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus"}));
-}
+          return protons;
+        },
+        {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus"}));
+  }
+};
 
-ROOT::RDF::RNode proton_kin_mode1(ROOT::RDF::RNode df) {
-  return define_variable(df.Define(
-      "protons",
-      [](int StdHepN, ROOT::RVec<double> &StdHepP4, ROOT::RVec<int> &StdHepPdg,
-         ROOT::RVec<int> &StdHepStatus, ROOT::RVec<int> &StdHepFm) {
-        ROOT::RVec<std::pair<TLorentzVector, int>> protons;
-        for (int i = 0; i < StdHepN; i++) {
-          if (StdHepPdg[i] == 2212 && StdHepStatus[i] == 1 &&
-              StdHepStatus[StdHepFm[i]] == 14) {
-            protons.emplace_back(
-                TLorentzVector{StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
-                               StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]},
-                i);
-          }
-        }
-        return protons;
-      },
-      {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus", "StdHepFm"}));
-}
-
-
-ROOT::RDF::RNode proton_kin_mode1_sub0(ROOT::RDF::RNode df) {
-  return define_variable(df.Define(
-      "protons",
-      [](int StdHepN, ROOT::RVec<double> &StdHepP4, ROOT::RVec<int> &StdHepPdg,
-         ROOT::RVec<int> &StdHepStatus, ROOT::RVec<int> &StdHepFm) {
-        ROOT::RVec<std::pair<TLorentzVector, int>> protons;
-        for (int i = 0; i < StdHepN; i++) {
-          if (StdHepPdg[i] == 2212 && StdHepStatus[i] == 1 &&
-              StdHepStatus[StdHepFm[i]] == 14 && StdHepFm[StdHepFm[i]] == -1) {
-            protons.emplace_back(
-                TLorentzVector{StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
-                               StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]},
-                i);
-          }
-        }
-        return protons;
-      },
-      {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus", "StdHepFm"}));
-}
-
-ROOT::RDF::RNode proton_kin_mode1_sub1(ROOT::RDF::RNode df) {
-  return define_variable(df.Define(
-      "protons",
-      [](int StdHepN, ROOT::RVec<double> &StdHepP4, ROOT::RVec<int> &StdHepPdg,
-         ROOT::RVec<int> &StdHepStatus, ROOT::RVec<int> &StdHepFm) {
-        ROOT::RVec<std::pair<TLorentzVector, int>> protons;
-        for (int i = 0; i < StdHepN; i++) {
-          if (StdHepPdg[i] == 2212 && StdHepStatus[i] == 1 &&
-              StdHepStatus[StdHepFm[i]] == 14 && StdHepFm[StdHepFm[i]] != -1 && StdHepStatus[StdHepFm[StdHepFm[i]]] == 3) {
-            protons.emplace_back(
-                TLorentzVector{StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
-                               StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]},
-                i);
-          }
-        }
-        return protons;
-      },
-      {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus", "StdHepFm"}));
-}
-
-ROOT::RDF::RNode proton_kin_mode1_sub2(ROOT::RDF::RNode df) {
-  return define_variable(df.Define(
-      "protons",
-      [](int StdHepN, ROOT::RVec<double> &StdHepP4, ROOT::RVec<int> &StdHepPdg,
-         ROOT::RVec<int> &StdHepStatus, ROOT::RVec<int> &StdHepFm) {
-        ROOT::RVec<std::pair<TLorentzVector, int>> protons;
-        for (int i = 0; i < StdHepN; i++) {
-          if (StdHepPdg[i] == 2212 && StdHepStatus[i] == 1 &&
-              StdHepStatus[StdHepFm[i]] == 14 && StdHepFm[StdHepFm[i]] != -1 && StdHepStatus[StdHepFm[StdHepFm[i]]] == 11) {
-            protons.emplace_back(
-                TLorentzVector{StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
-                               StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]},
-                i);
-          }
-        }
-        return protons;
-      },
-      {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus", "StdHepFm"}));
-}
-
-ROOT::RDF::RNode proton_kin_mode1_sub3(ROOT::RDF::RNode df) {
-  return define_variable(df.Define(
-      "protons",
-      [](int StdHepN, ROOT::RVec<double> &StdHepP4, ROOT::RVec<int> &StdHepPdg,
-         ROOT::RVec<int> &StdHepStatus, ROOT::RVec<int> &StdHepFm) {
-        ROOT::RVec<std::pair<TLorentzVector, int>> protons;
-        for (int i = 0; i < StdHepN; i++) {
-          if (StdHepPdg[i] == 2212 && StdHepStatus[i] == 1 &&
-              StdHepStatus[StdHepFm[i]] == 14 && StdHepFm[StdHepFm[i]] != -1 && StdHepStatus[StdHepFm[StdHepFm[i]]] == 12) {
-            protons.emplace_back(
-                TLorentzVector{StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
-                               StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]},
-                i);
-          }
-        }
-        return protons;
-      },
-      {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus", "StdHepFm"}));
-}
-
-ROOT::RDF::RNode proton_kin_mode2(ROOT::RDF::RNode df) {
-  return define_variable(df.Define(
-      "protons",
-      [](int StdHepN, ROOT::RVec<double> &StdHepP4, ROOT::RVec<int> &StdHepPdg,
-         ROOT::RVec<int> &StdHepStatus, ROOT::RVec<int> &StdHepFm) {
-        ROOT::RVec<std::pair<TLorentzVector, int>> protons;
-        for (int i = 0; i < StdHepN; i++) {
-          if (StdHepPdg[i] == 2212 && StdHepStatus[i] == 1 &&
-              StdHepStatus[StdHepFm[i]] == 16) {
-            protons.emplace_back(
-                TLorentzVector{StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
-                               StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]},
-                i);
-          }
-        }
-        return protons;
-      },
-      {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus", "StdHepFm"}));
-}
-
-ROOT::RDF::RNode proton_kin_beforefsi(ROOT::RDF::RNode df) {
-  return define_variable(df.Define(
-      "protons",
-      [](int StdHepN, ROOT::RVec<double> &StdHepP4, ROOT::RVec<int> &StdHepPdg,
-         ROOT::RVec<int> &StdHepStatus) {
-        ROOT::RVec<std::pair<TLorentzVector, int>> protons;
-        for (int i = 0; i < StdHepN; i++) {
-          if (StdHepPdg[i] == 2212 && StdHepStatus[i] == 14) {
-            protons.emplace_back(
-                TLorentzVector{StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
-                               StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]},
-                i);
-          }
-        }
-        return protons;
-      },
-      {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus"}));
-}
+REGISTER_PROCESS_NODE(proton_kin);

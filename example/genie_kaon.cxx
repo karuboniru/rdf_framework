@@ -1,3 +1,4 @@
+#include "common.h"
 #include <ROOT/RDF/InterfaceUtils.hxx>
 #include <ROOT/RDF/RInterface.hxx>
 #include <ROOT/RDataFrame.hxx>
@@ -39,87 +40,25 @@ ROOT::RDF::RNode define_variable(ROOT::RDF::RNode df) {
               {"kaonE"});
 }
 
-ROOT::RDF::RNode kaon_kin(ROOT::RDF::RNode df) {
-  return define_variable(df.Define(
-      "kaons",
-      [](int StdHepN, ROOT::RVec<double> &StdHepP4, ROOT::RVec<int> &StdHepPdg,
-         ROOT::RVec<int> &StdHepStatus) {
-        ROOT::RVec<TLorentzVector> kaons;
-        for (int i = 0; i < StdHepN; i++) {
-          if (StdHepPdg[i] == 321 && StdHepStatus[i] == 1) {
-            kaons.emplace_back(StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
-                               StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]);
+class kaon_kin : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return define_variable(df.Define(
+        "kaons",
+        [](int StdHepN, ROOT::RVec<double> &StdHepP4,
+           ROOT::RVec<int> &StdHepPdg, ROOT::RVec<int> &StdHepStatus) {
+          ROOT::RVec<TLorentzVector> kaons;
+          for (int i = 0; i < StdHepN; i++) {
+            if (StdHepPdg[i] == 321 && StdHepStatus[i] == 1) {
+              kaons.emplace_back(StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
+                                 StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]);
+            }
           }
-        }
-        return kaons;
-      },
-      {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus"}));
-}
+          return kaons;
+        },
+        {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus"}));
+  }
+};
 
-ROOT::RDF::RNode kaon_kin_beforefsi(ROOT::RDF::RNode df) {
-  return define_variable(df.Define(
-      "kaons",
-      [](int StdHepN, ROOT::RVec<double> &StdHepP4, ROOT::RVec<int> &StdHepPdg,
-         ROOT::RVec<int> &StdHepStatus) {
-        ROOT::RVec<TLorentzVector> kaons;
-        for (int i = 0; i < StdHepN; i++) {
-          if (StdHepPdg[i] == 321 && StdHepStatus[i] == 14) {
-            kaons.emplace_back(StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
-                               StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]);
-          }
-        }
-        return kaons;
-      },
-      {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus"}));
-}
+REGISTER_PROCESS_NODE(kaon_kin);
 
-ROOT::RDF::RNode pions(ROOT::RDF::RNode df) { // name maybe confusing
-  return define_variable(df.Define(
-      "kaons",
-      [](int StdHepN, ROOT::RVec<double> &StdHepP4, ROOT::RVec<int> &StdHepPdg,
-         ROOT::RVec<int> &StdHepStatus) {
-        ROOT::RVec<TLorentzVector> kaons;
-        for (int i = 0; i < StdHepN; i++) {
-          if (StdHepPdg[i] == 211 && StdHepStatus[i] == 1) {
-            kaons.emplace_back(StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
-                               StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]);
-          }
-        }
-        return kaons;
-      },
-      {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus"}));
-}
-
-ROOT::RDF::RNode muons(ROOT::RDF::RNode df) { // name maybe confusing
-  return define_variable(df.Define(
-      "kaons",
-      [](int StdHepN, ROOT::RVec<double> &StdHepP4, ROOT::RVec<int> &StdHepPdg,
-         ROOT::RVec<int> &StdHepStatus) {
-        ROOT::RVec<TLorentzVector> kaons;
-        for (int i = 0; i < StdHepN; i++) {
-          if (StdHepPdg[i] == 13 && StdHepStatus[i] == 1) {
-            kaons.emplace_back(StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
-                               StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]);
-          }
-        }
-        return kaons;
-      },
-      {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus"}));
-}
-
-ROOT::RDF::RNode protons(ROOT::RDF::RNode df) { // name maybe confusing
-  return define_variable(df.Define(
-      "kaons",
-      [](int StdHepN, ROOT::RVec<double> &StdHepP4, ROOT::RVec<int> &StdHepPdg,
-         ROOT::RVec<int> &StdHepStatus) {
-        ROOT::RVec<TLorentzVector> kaons;
-        for (int i = 0; i < StdHepN; i++) {
-          if (StdHepPdg[i] == 2212 && StdHepStatus[i] == 1) {
-            kaons.emplace_back(StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
-                               StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]);
-          }
-        }
-        return kaons;
-      },
-      {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus"}));
-}

@@ -6,9 +6,12 @@
 #include <TObjString.h>
 #include <TSpline.h>
 #include <genie_general.h>
+#include <common.h>
 
-ROOT::RDF::RNode pion_kin(ROOT::RDF::RNode df) {
-  return df
+class pion_kin : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override{
+   return df
       .Define("pions",
               [](int StdHepN, ROOT::RVec<double> &StdHepP4,
                  ROOT::RVec<int> &StdHepPdg, ROOT::RVec<int> &StdHepStatus) {
@@ -49,4 +52,7 @@ ROOT::RDF::RNode pion_kin(ROOT::RDF::RNode df) {
                 return piontheta;
               },
               {"pions", "p4_neutrino"});
-}
+  }
+};
+
+REGISTER_PROCESS_NODE(pion_kin);

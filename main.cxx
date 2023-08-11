@@ -1,12 +1,15 @@
+#include <ROOT/RDF/InterfaceUtils.hxx>
 #include <ROOT/RDF/RInterface.hxx>
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
 #include <TDirectory.h>
 #include <THStack.h>
 #include <TROOT.h>
+#include <common.h>
 #include <dlfcn.h>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -18,42 +21,48 @@
 #include <string>
 #include <vector>
 
-typedef ROOT::RDF::RNode (*analysis_func_t)(ROOT::RDF::RNode);
-typedef double (*normalize_func_t)(ROOT::RDF::RNode, std::vector<std::string>);
-
-ROOT::RDF::RNode no_op(ROOT::RDF::RNode node) { return node; }
-
-// mangle name for
-// ROOT::RDF::RNode funcname(ROOT::RDF::RNode)
-std::string funcname_mangle(std::string funcname) {
-  auto len = funcname.length();
-  std::string mangled_name =
-      "_Z" + std::to_string(len) + funcname +
-      "N4ROOT3RDF10RInterfaceINS_6Detail3RDF9RNodeBaseEvEE";
-  return mangled_name;
+std::unique_ptr<ProcessNodeI>
+get_node_process_callable(const nlohmann::json &conf) {
+  std::string name;
+  nlohmann::json config{};
+  if (conf.is_string()) {
+    name = conf.get<std::string>();
+  } else {
+    name = conf["name"].get<std::string>();
+    config = conf.value("config", nlohmann::json());
+  }
+  auto ptr = ProcessNodeFactory::instance().create(name);
+  ptr->configure(config);
+  return ptr;
 }
 
-std::string funcname_mangle_with_parameter(std::string funcname) {
-  auto len = funcname.length();
-  std::string mangled_name =
-      "_Z" + std::to_string(len) + funcname +
-      "N4ROOT3RDF10RInterfaceINS_6Detail3RDF9RNodeBaseEvEESt6vectorINSt7__"
-      "cxx1112basic_stringIcSt11char_traitsIcESaIcEEESaISC_EE";
-  return mangled_name;
+std::unique_ptr<NormalizeI> get_normalize_callable(const nlohmann::json &conf) {
+  std::string name;
+  nlohmann::json config{};
+  if (conf.is_string()) {
+    name = conf.get<std::string>();
+  } else {
+    name = conf["name"].get<std::string>();
+    config = conf.value("config", nlohmann::json());
+  }
+  auto ptr = NormalizeFactory::instance().create(name);
+  ptr->configure(config);
+  return ptr;
 }
+
+class noop : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override { return df; }
+};
+
+REGISTER_PROCESS_NODE(noop)
 
 TH1 *draw_hists(ROOT::RDF::RNode node, std::string var, std::string name,
-                double xmin, double xmax, int nbins, void *handle, double norm,
-                std::string cut = "", std::string wname = "") {
-  if (!cut.empty()) {
-    analysis_func_t func =
-        (analysis_func_t)(dlsym(handle, funcname_mangle(cut).c_str()));
-    if (func) {
-      node = func(node);
-    } else {
-      node = node.Filter(cut);
-    }
-  }
+                double xmin, double xmax, int nbins, double norm,
+                nlohmann::json &cut, std::string wname = "") {
+  auto cut_func =
+      cut.empty() ? std::make_unique<noop>() : get_node_process_callable(cut);
+  node = (*cut_func)(node);
   auto hist = wname.empty()
                   ? (TH1D *)node
                         .Histo1D(ROOT::RDF::TH1DModel{name.c_str(), var.c_str(),
@@ -77,17 +86,11 @@ TH1 *draw_hists(ROOT::RDF::RNode node, std::string var, std::string name,
 
 TH1 *draw_hists_2d(ROOT::RDF::RNode node, std::string varx, std::string vary,
                    std::string name, double xmin, double xmax, double ymin,
-                   double ymax, int nbinsx, int nbinsy, void *handle,
-                   double norm, std::string cut = "", std::string wname = "") {
-  if (!cut.empty()) {
-    analysis_func_t func =
-        (analysis_func_t)(dlsym(handle, funcname_mangle(cut).c_str()));
-    if (func) {
-      node = func(node);
-    } else {
-      node = node.Filter(cut);
-    }
-  }
+                   double ymax, int nbinsx, int nbinsy, double norm,
+                   nlohmann::json &cut, std::string wname = "") {
+  auto cut_func =
+      cut.empty() ? std::make_unique<noop>() : get_node_process_callable(cut);
+  node = (*cut_func)(node);
   auto hist =
       wname.empty()
           ? (TH2D *)node
@@ -186,27 +189,26 @@ int main(int argc, char **argv) {
       continue;
     }
 
-    analysis_func_t pre = no_op;
-    {
-      auto funcname = entry.value("preprocess", "");
-      if (!funcname.empty())
-        pre =
-            (analysis_func_t)(dlsym(handle, funcname_mangle(funcname).c_str()));
-    }
-    auto preprocessed_node = pre(rootnode);
+    // analysis_func_t pre = no_op;
+    // {
+    //   auto funcname = entry.value("preprocess", "");
+    //   if (!funcname.empty())
+    //     pre =
+    //         (analysis_func_t)(dlsym(handle,
+    //         funcname_mangle(funcname).c_str()));
+    // }
+    std::unique_ptr<ProcessNodeI> preprocess =
+        entry.find("preprocess") != entry.end()
+            ? get_node_process_callable(entry["preprocess"])
+            : std::make_unique<noop>();
+
+    auto preprocessed_node = (*preprocess)(rootnode);
 
     double norm_factor{};
     if (entry.find("normalize") != entry.end()) {
       auto normalize_conf = entry["normalize"];
-      auto func = (normalize_func_t)(dlsym(
-          handle,
-          funcname_mangle_with_parameter(normalize_conf["func"]).c_str()));
-      if (!func) {
-        std::cerr << "Cannot load symbol '" << normalize_conf
-                  << "': " << dlerror() << std::endl;
-        continue;
-      }
-      norm_factor = func(rootnode, normalize_conf["parameters"]);
+      auto normalize_func = get_normalize_callable(normalize_conf);
+      norm_factor = (*normalize_func)(rootnode);
       std::cout << "Normalization: " << norm_factor << std::endl;
     }
 
@@ -214,15 +216,13 @@ int main(int argc, char **argv) {
       auto plots_file = std::make_unique<TFile>(
           analysis_entry["plot_file"].get<std::string>().c_str(), "RECREATE");
       // std::vector<TObject *> objs_list{};
-      analysis_func_t func = (analysis_func_t)(dlsym(
-          handle,
-          funcname_mangle(analysis_entry["func"].get<std::string>()).c_str()));
-      if (!func) {
-        std::cerr << "Cannot load symbol '" << analysis_entry["func"]
-                  << "': " << dlerror() << std::endl;
-        continue;
-      }
-      auto result_node = func(preprocessed_node);
+      auto func = get_node_process_callable(analysis_entry["func"]);
+      // if (!func) {
+      //   std::cerr << "Cannot load symbol '" << analysis_entry["func"]
+      //             << "': " << dlerror() << std::endl;
+      //   continue;
+      // }
+      auto result_node = (*func)(preprocessed_node);
       result_node.Snapshot(
           analysis_entry["treename"].get<std::string>(),
           analysis_entry["filename"].get<std::string>(),
@@ -234,10 +234,10 @@ int main(int argc, char **argv) {
         double xmin = plotentry.value("xmin", 0.0);
         double xmax = plotentry.value("xmax", 0.0);
         int nbins = plotentry.value("nbins", 128);
-        std::string cut = plotentry.value("cut", "");
+        auto cut = plotentry.value("cut", nlohmann::json{});
         std::string wname = plotentry.value("wname", "");
-        draw_hists(result_node, var, name, xmin, xmax, nbins, handle,
-                   norm_factor, cut, wname)
+        draw_hists(result_node, var, name, xmin, xmax, nbins, norm_factor, cut,
+                   wname)
             ->SetDirectory(plots_file.get());
       }
       plots_file->cd();
@@ -253,7 +253,7 @@ int main(int argc, char **argv) {
         for (auto &cutentry : plotentry["cuts"]) {
           // objs_list.emplace_back();
           auto hist = draw_hists(result_node, var, name, xmin, xmax, nbins,
-                                 handle, norm_factor, cutentry, wname);
+                                 norm_factor, cutentry, wname);
           stack->Add(hist);
         }
         stack->Write();
@@ -268,10 +268,10 @@ int main(int argc, char **argv) {
         double ymax = plot_2d_entry.value("ymax", 0.0);
         int nbinsx = plot_2d_entry.value("nbinsx", 128);
         int nbinsy = plot_2d_entry.value("nbinsy", 128);
-        std::string cut = plot_2d_entry.value("cut", "");
+        auto cut = plot_2d_entry.value("cut", nlohmann::json{});
         std::string wname = plot_2d_entry.value("wname", "");
         draw_hists_2d(result_node, varx, vary, name, xmin, xmax, ymin, ymax,
-                      nbinsx, nbinsy, handle, norm_factor, cut, wname)
+                      nbinsx, nbinsy, norm_factor, cut, wname)
             ->SetDirectory(plots_file.get());
       }
       plots_file->Write();

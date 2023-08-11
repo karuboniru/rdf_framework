@@ -1,8 +1,9 @@
+#include "tki_general.h"
 #include "ROOT/RDF/InterfaceUtils.hxx"
 #include "ROOT/RVec.hxx"
 #include "TF1.h"
 #include "TRandom3.h"
-#include "tki_general.h"
+#include <common.h>
 
 event::~event() {}
 
@@ -1015,7 +1016,7 @@ ROOT::RDF::RNode MINERvAGFS_do_TKI(ROOT::RDF::RNode df) {
               {"commonTKI"});
 }
 
-ROOT::RDF::RNode MINERvAGFSPIZERO(ROOT::RDF::RNode df) {
+ROOT::RDF::RNode MINERvAGFSPIZERO_f(ROOT::RDF::RNode df) {
   return MINERvAGFS_do_TKI(
       df.Filter([](event &e) { return e.count_out(111) != 0; }, {"event"},
                 "e.count_out(111) != 0")
@@ -1068,7 +1069,16 @@ ROOT::RDF::RNode MINERvAGFSPIZERO(ROOT::RDF::RNode df) {
   // return MINERvAGFS_do_TKI(df);
 }
 
-ROOT::RDF::RNode MINERvAGFS0PI(ROOT::RDF::RNode df) {
+class MINERvAGFSPIZERO : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return MINERvAGFSPIZERO_f(df);
+  }
+};
+
+REGISTER_PROCESS_NODE(MINERvAGFSPIZERO)
+
+ROOT::RDF::RNode MINERvAGFS0PI_f(ROOT::RDF::RNode df) {
   return MINERvAGFS_do_TKI(
       df.Filter([](event &e) { return e.count_out(111) == 0; }, {"event"},
                 "e.count_out(111) == 0")
@@ -1120,16 +1130,42 @@ ROOT::RDF::RNode MINERvAGFS0PI(ROOT::RDF::RNode df) {
                   },
                   {"good_proton"}));
 }
+class MINERvAGFS0PI : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return MINERvAGFS0PI_f(df);
+  }
+};
 
-ROOT::RDF::RNode CCQEL(ROOT::RDF::RNode df) {
-  return df.Filter([](event &e) { return e.get_mode() == event::channel::QE; },
-                   {"event"}, "CUTQEL");
-}
+REGISTER_PROCESS_NODE(MINERvAGFS0PI)
 
-ROOT::RDF::RNode CCRES(ROOT::RDF::RNode df) {
-  return df.Filter([](event &e) { return e.get_mode() == event::channel::RES; },
-                   {"event"}, "CUTRES");
-}
+// ROOT::RDF::RNode CCQEL(ROOT::RDF::RNode df) {
+//   return df.Filter([](event &e) { return e.get_mode() == event::channel::QE; },
+//                    {"event"}, "CUTQEL");
+// }
+
+class CCQEL : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return df.Filter(
+        [](event &e) { return e.get_mode() == event::channel::QE; }, {"event"},
+        "CUTQEL");
+  }
+};
+
+// ROOT::RDF::RNode CCRES(ROOT::RDF::RNode df) {
+//   return df.Filter([](event &e) { return e.get_mode() == event::channel::RES; },
+//                    {"event"}, "CUTRES");
+// }
+
+class CCRES : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return df.Filter(
+        [](event &e) { return e.get_mode() == event::channel::RES; }, {"event"},
+        "CUTRES");
+  }
+};
 
 ROOT::RDF::RNode CCDIS(ROOT::RDF::RNode df) {
   return df.Filter([](event &e) { return e.get_mode() == event::channel::DIS; },

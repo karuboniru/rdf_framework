@@ -1,6 +1,7 @@
 #include <TObjString.h>
 #include <array>
 #include "TF1.h"
+#include "common.h"
 #include "TRandom3.h"
 #include <ROOT/RDF/RInterface.hxx>
 #include <ROOT/RDataFrame.hxx>
@@ -88,4 +89,9 @@ ROOT::RDF::RNode GENIE_RDF_setup_event(ROOT::RDF::RNode df) {
 }
 
 
-ROOT::RDF::RNode pre(ROOT::RDF::RNode df) { return GENIE_RDF_setup_event(df); }
+class pre : ProcessNodeI{
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return GENIE_RDF_setup_event(df);
+  }
+};

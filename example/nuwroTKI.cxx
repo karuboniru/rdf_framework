@@ -8,6 +8,7 @@
 #include <TLorentzVector.h>
 #include <array>
 #include <cassert>
+#include <common.h>
 #include <iostream>
 #include <map>
 #include <set>
@@ -83,12 +84,26 @@ ROOT::RDF::RNode NuWro_RDF_setup_event(ROOT::RDF::RNode df) {
               {"event"});
 }
 
-ROOT::RDF::RNode pre(ROOT::RDF::RNode df) {
-  return MINERvAGFS_general(NuWro_RDF_setup_event(df));
-}
+class pre : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return MINERvAGFS_general(NuWro_RDF_setup_event(df));
+  }
+};
 
-double normalize_factor_CC(ROOT::RDF::RNode df, std::vector<std::string>) {
-  auto mean = df.Mean("EvtWght");
-  auto num = df.Count();
-  return mean.GetValue() / num.GetValue();
-}
+REGISTER_PROCESS_NODE(pre);
+
+// double normalize_factor_CC(ROOT::RDF::RNode df, std::vector<std::string>) {
+//   auto mean = df.Mean("EvtWght");
+//   auto num = df.Count();
+//   return mean.GetValue() / num.GetValue();
+// }
+
+class normalize_factor_CC : NormalizeI {
+public:
+  double operator()(ROOT::RDF::RNode df) override {
+    auto mean = df.Mean("EvtWght");
+    auto num = df.Count();
+    return mean.GetValue() / num.GetValue();
+  }
+};

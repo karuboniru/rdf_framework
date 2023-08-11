@@ -9,12 +9,12 @@
       "plugin": "/home/yan/codes/RDF_Framework/build/libgenieTKI.so",
       "preprocess": "pre",
       "normalize": {
-        "func": "normalize_factor_CC",
-        "parameters": [
-          "/home/yan/neutrino/GENIE/spline/G18_10b_02_11b/o.root",
-          "nu_mu_C12/tot_cc",
-          "12"
-        ]
+        "name": "normalize_factor_CC",
+        "config": {
+          "filename": "/media/storage/neutrino/GENIE/atmo/G18_10b_02_11b.root",
+          "obj_path":"nu_mu_C12/tot_cc",
+          "Z": 12
+        }
       },
       "analysis": [
         {

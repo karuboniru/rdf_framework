@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 project(nuanalysis)
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-
+# set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 set(CMAKE_CXX_STANDARD 17)
 include(FetchContent)
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz)
@@ -13,10 +12,10 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -O3 -march=native -Wall -Wextra -Wpedantic")
-
 add_subdirectory(example)
 
 add_executable(main main.cxx)
+set_property(TARGET main PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(main ROOT::ROOTDataFrame nlohmann_json::nlohmann_json ${CMAKE_DL_LIBS})
 install(TARGETS main DESTINATION bin)
 
