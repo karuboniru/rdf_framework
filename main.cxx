@@ -2,6 +2,7 @@
 #include <ROOT/RDF/RInterface.hxx>
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
+#include <TChain.h>
 #include <TDirectory.h>
 #include <THStack.h>
 #include <TROOT.h>
@@ -176,7 +177,21 @@ int main(int argc, char **argv) {
   // for (auto &file : file_paths) {
   //   std::cout << "Adding file " << file << std::endl;
   // }
-  ROOT::RDataFrame df(j["treename"].get<std::string>(), file_paths);
+  TChain filechain;
+  for (auto &file : file_paths) {
+    filechain.AddFile((file + "?#" + j["treename"].get<std::string>()).c_str());
+  }
+  std::vector<std::unique_ptr<TChain>> friend_chains{};
+  for (auto &friend_tree : j["friend_trees"]) {
+    auto &chain = friend_chains.emplace_back(std::make_unique<TChain>());
+    for (auto &file : file_paths) {
+      chain->AddFile(
+          (file + "?#" + friend_tree["treename"].get<std::string>()).c_str());
+    }
+    filechain.AddFriend(chain.get(), friend_tree.value("alias", "").c_str());
+  }
+  // ROOT::RDataFrame df(j["treename"].get<std::string>(), file_paths);
+  ROOT::RDataFrame df(filechain);
   auto rootnode = ROOT::RDF::AsRNode(df);
 
   for (auto &entry : j["plugins"]) {

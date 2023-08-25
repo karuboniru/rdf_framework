@@ -59,18 +59,6 @@ std::pair<double, double> get_xsec(TH1 *h_rate, TGraph *spline) {
   return {event_rate, event_rate / fluxint};
 }
 
-// double normalize_factor_CC(ROOT::RDF::RNode df,
-//                            std::vector<std::string> parameters) {
-//   auto h = (CC_selection{})(df).Histo1D({"", "", 256, 0, 0}, "neutrinoE");
-//   auto filename = parameters[0];
-//   auto obj_path = parameters[1];
-//   auto Z = std::stoi(parameters[2]);
-//   auto spline_obj = get_object<TGraph>(filename, obj_path);
-//   auto [tot, xsec] = get_xsec(h.GetPtr(), spline_obj.get());
-//   xsec *= 1. / ((double)Z) * 1e-38;
-//   return xsec / tot;
-// }
-
 class normalize_factor_cc : public NormalizeI {
 public:
   double operator()(ROOT::RDF::RNode df) override {
@@ -80,6 +68,7 @@ public:
     // auto Z = std::stoi(parameters[2]);
     auto spline_obj = get_object<TGraph>(filename, obj_path);
     auto [tot, xsec] = get_xsec(h.GetPtr(), spline_obj.get());
+    std::cerr << "tot: " << tot << " xsec: " << xsec << std::endl;
     xsec *= 1. / ((double)Z) * 1e-38;
     return xsec / tot;
   }

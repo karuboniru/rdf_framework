@@ -1,0 +1,42 @@
+{
+  "files": [
+    "/var/home/yan/neutrino/juno/mu/mu2/sample_elecsim.root"
+  ],
+  "treename": "Event/CdLpmtTruth/CdLpmtElecTruthEvt",
+  "friend_trees": [
+    {
+      "treename": "Event/Sim/SimEvt",
+      "alias": "SimEvt"
+    },
+    {
+      "treename": "Meta/navigator"
+    }
+  ],
+  "plugins": [
+    {
+      "name": "process",
+      "plugin": "/home/yan/code/rdf_framework_juno/build/lib/libelec2hit.so",
+      "analysis": [
+        {
+          "treename": "treeout",
+          "filename": "process.root",
+          "plot_file": "plot_kaon.root",
+          "func": "process",
+          "output": [
+            "plotnpe",
+            "plothittime",
+            "plotamplitude",
+            "init_theta",
+            "init_phi",
+            "exit_theta",
+            "exit_phi",
+            "initpoint",
+            "exitpoint",
+            "m_EventID",
+            "m_RunID"
+          ]
+        }
+      ]
+    }
+  ]
+}

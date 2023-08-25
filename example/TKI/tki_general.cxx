@@ -1140,7 +1140,8 @@ public:
 REGISTER_PROCESS_NODE(MINERvAGFS0PI)
 
 // ROOT::RDF::RNode CCQEL(ROOT::RDF::RNode df) {
-//   return df.Filter([](event &e) { return e.get_mode() == event::channel::QE; },
+//   return df.Filter([](event &e) { return e.get_mode() == event::channel::QE;
+//   },
 //                    {"event"}, "CUTQEL");
 // }
 
@@ -1153,10 +1154,7 @@ public:
   }
 };
 
-// ROOT::RDF::RNode CCRES(ROOT::RDF::RNode df) {
-//   return df.Filter([](event &e) { return e.get_mode() == event::channel::RES; },
-//                    {"event"}, "CUTRES");
-// }
+REGISTER_PROCESS_NODE(CCQEL)
 
 class CCRES : public ProcessNodeI {
 public:
@@ -1167,12 +1165,26 @@ public:
   }
 };
 
-ROOT::RDF::RNode CCDIS(ROOT::RDF::RNode df) {
-  return df.Filter([](event &e) { return e.get_mode() == event::channel::DIS; },
-                   {"event"}, "CUTDIS");
-}
+REGISTER_PROCESS_NODE(CCRES)
 
-ROOT::RDF::RNode CUT2P2H(ROOT::RDF::RNode df) {
-  return df.Filter([](event &e) { return e.get_mode() == event::channel::MEC; },
-                   {"event"}, "CUT2P2H");
-}
+class CCDIS : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return df.Filter(
+        [](event &e) { return e.get_mode() == event::channel::DIS; }, {"event"},
+        "CCDIS");
+  }
+};
+
+REGISTER_PROCESS_NODE(CCDIS)
+
+class CC2P2H : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return df.Filter(
+        [](event &e) { return e.get_mode() == event::channel::MEC; }, {"event"},
+        "CC2P2H");
+  }
+};
+
+REGISTER_PROCESS_NODE(CC2P2H)

@@ -1,57 +1,61 @@
-#include "ROOT/RVec.hxx"
+#include <TObjString.h>
+#include <array>
 #include "TF1.h"
-#include "TLorentzVector.h"
-#include "TObjString.h"
+#include "common.h"
 #include "TRandom3.h"
 #include <ROOT/RDF/RInterface.hxx>
 #include <ROOT/RDataFrame.hxx>
 #include <TLorentzVector.h>
+#include <TSpline.h>
 #include <array>
-#include <cassert>
-#include <common.h>
 #include <iostream>
 #include <map>
 #include <set>
-#include <sstream>
-#include <tki_general.h>
 #include <type_traits>
 #include <vector>
+#include <tki_general.h>
 
-event::channel getmode_nuwro(TObjString &code) {
-  const int mode = code.GetString().Atoi();
-  // cout << "mode = " << mode << endl;
-  switch (mode) {
-  case 1:
+event::channel get_mode_genie(const TObjString &code) {
+  if (code.GetString().Contains("QES")) {
     return event::channel::QE;
-    break;
-  case 11:
+  } else if (code.GetString().Contains("RES")) {
     return event::channel::RES;
-    break;
-  case 26:
+  } else if (code.GetString().Contains("DIS")) {
     return event::channel::DIS;
-    break;
-  case 2:
+  } else if (code.GetString().Contains("MEC")) {
     return event::channel::MEC;
-    break;
-  case 16:
-  default:
-    return event::channel::Other;
-    break;
   }
+  return event::channel::Other;
 }
 
-ROOT::RDF::RNode NuWro_RDF_setup_event(ROOT::RDF::RNode df) {
+ROOT::RDF::RNode GENIE_RDF_setup_event(ROOT::RDF::RNode df) {
   return df
+      .Filter(
+          [](TObjString &EvtCode) {
+            auto str = EvtCode.GetString();
+            return str.Contains("CC");
+          },
+          {"EvtCode"})
+      .Define("neutrinoE",
+              [](int StdHepN, ROOT::RVec<double> &StdHepP4,
+                 ROOT::RVec<int> &StdHepPdg, ROOT::RVec<int> &StdHepStatus) {
+                for (int i = 0; i < StdHepN; i++) {
+                  if ((abs(StdHepPdg[i]) == 12 || abs(StdHepPdg[i]) == 14 ||
+                       abs(StdHepPdg[i]) == 16) &&
+                      StdHepStatus[i] == 0) {
+                    return StdHepP4[4 * i + 3];
+                  }
+                }
+                return 0.;
+              },
+              {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus"})
       .Define("event",
               [](int StdHepN, ROOT::RVec<int> &StdHepPdg,
                  ROOT::RVec<int> &StdHepStatus, ROOT::RVec<double> &StdHepP4_,
                  TObjString &EvtCode) {
                 double(*StdHepP4)[4] = (double(*)[4]) & StdHepP4_[0];
                 event e{};
-                if (getmode_nuwro(EvtCode) == event::channel::Other) {
-                  return e;
-                }
-                e.set_mode(getmode_nuwro(EvtCode));
+                e.set_mode(get_mode_genie(EvtCode));
                 for (int i = 0; i < StdHepN; ++i) {
                   auto pdg = StdHepPdg[i];
                   if (StdHepPdg[i] == 1000000010) {
@@ -84,26 +88,11 @@ ROOT::RDF::RNode NuWro_RDF_setup_event(ROOT::RDF::RNode df) {
               {"event"});
 }
 
-class pre : public ProcessNodeI {
+
+class pre : ProcessNodeI{
 public:
   ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
-    return MINERvAGFS_general(NuWro_RDF_setup_event(df));
+    return GENIE_RDF_setup_event(df);
   }
 };
 
-REGISTER_PROCESS_NODE(pre);
-
-// double normalize_factor_CC(ROOT::RDF::RNode df, std::vector<std::string>) {
-//   auto mean = df.Mean("EvtWght");
-//   auto num = df.Count();
-//   return mean.GetValue() / num.GetValue();
-// }
-
-class normalize_factor_CC : NormalizeI {
-public:
-  double operator()(ROOT::RDF::RNode df) override {
-    auto mean = df.Mean("EvtWght");
-    auto num = df.Count();
-    return mean.GetValue() / num.GetValue();
-  }
-};

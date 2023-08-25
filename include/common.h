@@ -1,20 +1,20 @@
 #pragma once
 
-#include "ROOT/RDF/InterfaceUtils.hxx"
-#include <functional>
-#include <string>
-#include <unordered_map>
 #ifndef _COMMON_HEADER_
 #define _COMMON_HEADER_
+#include "ROOT/RDF/InterfaceUtils.hxx"
 #include <ROOT/RDF/RInterface.hxx>
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
+#include <functional>
 #include <nlohmann/json.hpp>
+#include <string>
+#include <unordered_map>
 
 template <typename T> class ProcessNodeT {
 public:
   virtual T operator()(ROOT::RDF::RNode) = 0;
-  virtual void configure(const nlohmann::json &){};
+  virtual void configure(const nlohmann::json &) {}
 };
 
 template <typename T> class FactoryT {
@@ -40,7 +40,9 @@ public:
   }
 
 private:
-  std::unordered_map<std::string, std::function<std::unique_ptr<ProcessNodeT<T>>()>> creator;
+  std::unordered_map<std::string,
+                     std::function<std::unique_ptr<ProcessNodeT<T>>()>>
+      creator;
   FactoryT() = default;
   FactoryT(const FactoryT &) = delete;
   FactoryT(FactoryT &&) = delete;
@@ -55,13 +57,17 @@ using NormalizeFactory = FactoryT<double>;
   namespace {                                                                  \
   static bool type##registered =                                               \
       ProcessNodeFactory::instance().registerCreator(                          \
-          #type, [] { return std::make_unique<type>(); });                     \
+          #type, []() -> std::unique_ptr<ProcessNodeI> {                       \
+            return std::make_unique<type>();                                   \
+          });                                                                  \
   }
 
 #define REGISTER_NORMALIZE(type)                                               \
   namespace {                                                                  \
   static bool type##registered = NormalizeFactory::instance().registerCreator( \
-      #type, [] { return std::make_unique<type>(); });                         \
+      #type, []() -> std::unique_ptr<NormalizeI> {                             \
+        return std::make_unique<type>();                                       \
+      });                                                                      \
   }
 
 #endif
