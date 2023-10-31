@@ -36,9 +36,20 @@ std::string operator|(const std::string_view lhs, env_handler &rhs) {
     auto end = ret.find('}', pos);
     if (end != std::string::npos) {
       auto key = ret.substr(pos + 2, end - pos - 2);
-      auto value = rhs.get_env(key);
-      if (!value.empty()) {
-        ret.replace(pos, end - pos + 1, value);
+      auto colonpos = key.find(':');
+      if (colonpos == std::string::npos) {
+        auto value = rhs.get_env(key);
+        if (!value.empty()) {
+          ret.replace(pos, end - pos + 1, value);
+        }
+      } else {
+        auto realkey = key.substr(0, colonpos);
+        auto value = rhs.get_env(realkey);
+        if (!value.empty()) {
+          ret.replace(pos, end - pos + 1, value);
+        } else {
+          ret.replace(pos, end - pos + 1, key.substr(colonpos + 1));
+        }
       }
     }
   }

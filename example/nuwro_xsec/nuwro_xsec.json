@@ -21,7 +21,7 @@
               "name": "xsec",
               "xmin": 0,
               "xmax": 10,
-              "bins": 128
+              "bins": ${bins:256}
             }
           ]
         }
