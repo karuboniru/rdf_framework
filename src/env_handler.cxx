@@ -28,11 +28,11 @@ std::string env_handler::get_env(const std::string_view key) {
   return {};
 }
 
-// replace ${ENV} and $ENV with the value of ENV
+// replace ${ENV} with the value of ENV
 std::string operator|(const std::string_view lhs, env_handler &rhs) {
   std::string ret{lhs};
-  auto pos = ret.find("${");
-  while (pos != std::string::npos) {
+  for (auto pos = ret.find("${"); pos != std::string::npos;
+       pos = ret.find("${", pos + 1)) {
     auto end = ret.find('}', pos);
     if (end != std::string::npos) {
       auto key = ret.substr(pos + 2, end - pos - 2);
@@ -41,19 +41,6 @@ std::string operator|(const std::string_view lhs, env_handler &rhs) {
         ret.replace(pos, end - pos + 1, value);
       }
     }
-    pos = ret.find("${", pos + 1);
-  }
-  pos = ret.find('$');
-  while (pos != std::string::npos) {
-    auto end = ret.find(' ', pos);
-    if (end != std::string::npos) {
-      auto key = ret.substr(pos + 1, end - pos - 1);
-      auto value = rhs.get_env(key);
-      if (!value.empty()) {
-        ret.replace(pos, end - pos + 1, value);
-      }
-    }
-    pos = ret.find('$', pos + 1);
   }
   return ret;
 }

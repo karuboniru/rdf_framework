@@ -1,15 +1,16 @@
 #include "analysis_steps.h"
 #include "THStack.h"
+#include "dlopen_wrap.h"
 #include "get_callable.h"
 #include "hist_draw.h"
 #include "wildcard_expand.h"
-#include "dlopen_wrap.h"
 #include <ROOT/RDF/InterfaceUtils.hxx>
 #include <TChain.h>
 #include <dlfcn.h>
+#include <exception>
 #include <memory>
 
-std::unique_ptr<TChain> prepare_chain(const nlohmann::json &j) {
+std::unique_ptr<TChain> prepare_chain(nlohmann::json &j) {
   std::vector<std::string> file_paths{};
   for (auto &file : j["files"]) {
     auto expanded_paths = expand_wildcard_path(file.get<std::string>());
@@ -22,7 +23,9 @@ std::unique_ptr<TChain> prepare_chain(const nlohmann::json &j) {
         (file + "?#" + j["treename"].get<std::string>()).c_str());
   }
   std::vector<std::unique_ptr<TChain>> friend_chains{};
+  // if (j.find("friend_trees") != j.end())
   for (auto &friend_tree : j["friend_trees"]) {
+    // std::cout << "Adding friend tree: " << friend_tree << std::endl;
     auto &chain = friend_chains.emplace_back(std::make_unique<TChain>());
     for (auto &file : file_paths) {
       chain->AddFile(
@@ -33,8 +36,7 @@ std::unique_ptr<TChain> prepare_chain(const nlohmann::json &j) {
   return filechain;
 }
 
-void plugin_handle(ROOT::RDF::RNode rootnode, const nlohmann::json &entry) {
-
+void plugin_handle(ROOT::RDF::RNode rootnode, nlohmann::json &entry) {
   std::cout << "Processing " << entry["name"] << std::endl;
 
   std::string so_name = entry["plugin"];
@@ -61,7 +63,7 @@ void plugin_handle(ROOT::RDF::RNode rootnode, const nlohmann::json &entry) {
 }
 
 void analysis_entry_handle(ROOT::RDF::RNode preprocessed_node,
-                           const nlohmann::json &analysis_entry,
+                           nlohmann::json &analysis_entry,
                            double norm_factor) {
 
   auto plots_file = std::make_unique<TFile>(

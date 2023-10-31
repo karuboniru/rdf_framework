@@ -1,0 +1,31 @@
+{
+  "files": [
+    "root://junoeos01.ihep.ac.cn//eos/juno/dirac/juno/user/q/qyan/nuwro/nuwro${flavor}-${model}-*/*.rootracker.root"
+  ],
+  "treename": "nRooTracker",
+  "plugins": [
+    {
+      "name": "plot",
+      "plugin": "${basepath}/build/example/nuwro_xsec/libnuwro_xsec.so",
+      "normalize": "normalize_factor_nuwro",
+      "analysis": [
+        {
+          "treename": "treeout",
+          "filename": "xsecplot1.root",
+          "plot_file": "nuwro${flavor}-${model}.root",
+          "func": "xsecplot",
+          "output": [],
+          "plots": [
+            {
+              "var": "E",
+              "name": "xsec",
+              "xmin": 0,
+              "xmax": 10,
+              "bins": 128
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -17,6 +17,7 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <regex>
+#include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,7 +53,7 @@ int main(int argc, char **argv) {
     std::ifstream json_file(argv[1]);
     std::stringstream buffer;
     buffer << json_file.rdbuf();
-    j = nlohmann::json::parse(buffer.str() | env_handler::get_instance());
+    std::stringstream{buffer.str() | env_handler::get_instance()} >> j;
   }
   auto filechain = prepare_chain(j);
   ROOT::RDataFrame df(*filechain);

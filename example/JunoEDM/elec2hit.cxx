@@ -10,7 +10,6 @@
 #include "Event/TrackElecTruth.h"
 #include "Event/TrackElecTruthEvt.h"
 #include "EvtNavigator/EvtNavHelper.h"
-#include "TH3.h"
 #include "common.h"
 #include <ROOT/RDF/InterfaceUtils.hxx>
 #include <ROOT/RDF/RInterface.hxx>
@@ -20,12 +19,16 @@
 #include <TError.h>
 #include <TGraph.h>
 #include <TGraph2D.h>
+#include <TH3.h>
+#include <TLorentzVector.h>
 #include <TVector3.h>
 #include <TView.h>
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <filesystem>
 #include <fstream>
+#include <memory>
 #include <tuple>
 #include <unordered_map>
 
@@ -72,6 +75,47 @@ public:
   virtual ROOT::RDF::RNode operator()(ROOT::RDF::RNode rdf) override {
     return rdf
         .Define(
+            "maintrack",
+            [](const std::vector<JM::SimTrack *> &track) { return track[0]; },
+            {"SimEvt.m_tracks"})
+        .Define("initP",
+                [](JM::SimTrack *track) {
+                  return TLorentzVector{
+                      track->getInitPx(), track->getInitPy(),
+                      track->getInitPz(),
+                      std::sqrt(std::pow(track->getInitPx(), 2) +
+                                std::pow(track->getInitPy(), 2) +
+                                std::pow(track->getInitPz(), 2) +
+                                std::pow(track->getInitMass(), 2))};
+                },
+                {"maintrack"})
+        .Define("initpoint",
+                [](JM::SimTrack *track) {
+                  return TLorentzVector{track->getInitX(), track->getInitY(),
+                                        track->getInitZ(), track->getInitT()};
+                },
+                {"maintrack"})
+        .Define("exitpoint",
+                [](JM::SimTrack *track) {
+                  return TLorentzVector{track->getExitX(), track->getExitY(),
+                                        track->getExitZ(), track->getExitT()};
+                },
+                {"maintrack"})
+        .Define(
+            "init_theta",
+            [](const TLorentzVector &initpoint) { return initpoint.Theta(); },
+            {"initpoint"})
+        .Define("init_phi",
+                [](const TLorentzVector &initpoint) { return initpoint.Phi(); },
+                {"initpoint"})
+        .Define(
+            "exit_theta",
+            [](const TLorentzVector &exitpoint) { return exitpoint.Theta(); },
+            {"exitpoint"})
+        .Define("exit_phi",
+                [](const TLorentzVector &exitpoint) { return exitpoint.Phi(); },
+                {"exitpoint"})
+        .Define(
             "electruth",
             [](JM::CdLpmtElecTruthEvt &elecevent) {
               auto &&truth = elecevent.truths();
@@ -103,84 +147,112 @@ public:
               return std::make_tuple(npe, hitTime, theta, phi, amplitude);
             },
             {"CdLpmtElecTruthEvt"})
-        .Define("plotnpe",
-                [](const std::tuple<std::vector<double>, std::vector<double>,
-                                    std::vector<double>, std::vector<double>,
-                                    std::vector<double>> &electruth) {
-                  auto &&[npe, hitTime, theta, phi, amplitude] = electruth;
-                  TGraph2D graph{
-                      static_cast<int>(npe.size()),
-                      const_cast<double *>(&theta[0]),
-                      const_cast<double *>(&phi[0]),
-                      const_cast<double *>(&npe[0]),
-                  };
-                  graph.SetMarkerStyle(21);
-                  graph.SetMarkerSize(1.0);
-                  return graph;
-                },
-                {"electruth"})
-        .Define("plothittime",
-                [](const std::tuple<std::vector<double>, std::vector<double>,
-                                    std::vector<double>, std::vector<double>,
-                                    std::vector<double>> &electruth) {
-                  auto &&[npe, hitTime, theta, phi, amplitude] = electruth;
-                  TGraph2D graph{
-                      static_cast<int>(hitTime.size()),
-                      const_cast<double *>(&theta[0]),
-                      const_cast<double *>(&phi[0]),
-                      const_cast<double *>(&hitTime[0]),
-                  };
-                  graph.SetMarkerStyle(21);
-                  graph.SetMarkerSize(1.0);
-                  return graph;
-                },
-                {"electruth"})
-        .Define("plotamplitude",
-                [](const std::tuple<std::vector<double>, std::vector<double>,
-                                    std::vector<double>, std::vector<double>,
-                                    std::vector<double>> &electruth) {
-                  auto &&[npe, hitTime, theta, phi, amplitude] = electruth;
-                  TGraph2D graph{
-                      static_cast<int>(amplitude.size()),
-                      const_cast<double *>(&theta[0]),
-                      const_cast<double *>(&phi[0]),
-                      const_cast<double *>(&amplitude[0]),
-                  };
-                  graph.SetMarkerStyle(21);
-                  graph.SetMarkerSize(1.0);
-                  return graph;
-                },
-                {"electruth"})
         .Define(
-            "maintrack",
-            [](const std::vector<JM::SimTrack *> &track) { return track[0]; },
-            {"SimEvt.m_tracks"})
-        .Define("initpoint",
-                [](JM::SimTrack *track) {
-                  return TVector3{track->getInitX(), track->getInitY(),
-                                  track->getInitZ()};
-                },
-                {"maintrack"})
-        .Define("exitpoint",
-                [](JM::SimTrack *track) {
-                  return TVector3{track->getExitX(), track->getExitY(),
-                                  track->getExitZ()};
-                },
-                {"maintrack"})
-        .Define("init_theta",
-                [](const TVector3 &initpoint) { return initpoint.Theta(); },
-                {"initpoint"})
-        .Define("init_phi",
-                [](const TVector3 &initpoint) { return initpoint.Phi(); },
-                {"initpoint"})
-        .Define("exit_theta",
-                [](const TVector3 &exitpoint) { return exitpoint.Theta(); },
-                {"exitpoint"})
-        .Define("exit_phi",
-                [](const TVector3 &exitpoint) { return exitpoint.Phi(); },
-                {"exitpoint"});
-    ;
+            "plotnpe",
+            [&](const std::tuple<std::vector<double>, std::vector<double>,
+                                 std::vector<double>, std::vector<double>,
+                                 std::vector<double>> &electruth,
+                const TLorentzVector &initpoint,
+                const TLorentzVector &exitpoint, unsigned int slot,
+                ULong64_t entry) {
+              auto &&[npe, hitTime, theta, phi, amplitude] = electruth;
+              TGraph2D graph{
+                  static_cast<int>(npe.size()),
+                  const_cast<double *>(&theta[0]),
+                  const_cast<double *>(&phi[0]),
+                  const_cast<double *>(&npe[0]),
+              };
+              if (!save_path_prefix.empty())
+                plot_graph(graph, initpoint.Vect(), exitpoint.Vect(), slot,
+                           entry, "plotnpe");
+              return graph;
+            },
+            {"electruth", "initpoint", "exitpoint", "rdfslot_", "rdfentry_"})
+        .Define(
+            "plothittime",
+            [&](const std::tuple<std::vector<double>, std::vector<double>,
+                                 std::vector<double>, std::vector<double>,
+                                 std::vector<double>> &electruth,
+                const TLorentzVector &initpoint,
+                const TLorentzVector &exitpoint, unsigned int slot,
+                ULong64_t entry) {
+              auto &&[npe, hitTime, theta, phi, amplitude] = electruth;
+              TGraph2D graph{
+                  static_cast<int>(hitTime.size()),
+                  const_cast<double *>(&theta[0]),
+                  const_cast<double *>(&phi[0]),
+                  const_cast<double *>(&hitTime[0]),
+              };
+              if (!save_path_prefix.empty())
+                plot_graph(graph, initpoint.Vect(), exitpoint.Vect(), slot,
+                           entry, "plothittime");
+              return graph;
+            },
+            {"electruth", "initpoint", "exitpoint", "rdfslot_", "rdfentry_"})
+        .Define(
+            "plotamplitude",
+            [&](const std::tuple<std::vector<double>, std::vector<double>,
+                                 std::vector<double>, std::vector<double>,
+                                 std::vector<double>> &electruth,
+                const TLorentzVector &initpoint,
+                const TLorentzVector &exitpoint, unsigned int slot,
+                ULong64_t entry) {
+              auto &&[npe, hitTime, theta, phi, amplitude] = electruth;
+              TGraph2D graph{
+                  static_cast<int>(amplitude.size()),
+                  const_cast<double *>(&theta[0]),
+                  const_cast<double *>(&phi[0]),
+                  const_cast<double *>(&amplitude[0]),
+              };
+              if (!save_path_prefix.empty())
+                plot_graph(graph, initpoint.Vect(), exitpoint.Vect(), slot,
+                           entry, "plotamplitude");
+              return graph;
+            },
+            {"electruth", "initpoint", "exitpoint", "rdfslot_", "rdfentry_"});
   }
+
+  virtual void configure(const nlohmann::json &config) override {
+    save_path_prefix = config["save_path_prefix"].get<std::string>();
+    std::cout << "save_path_prefix: " << save_path_prefix << std::endl;
+    if (!save_path_prefix.empty()) {
+      std::filesystem::create_directories(save_path_prefix);
+    }
+    if (save_path_prefix.back() != '/') {
+      save_path_prefix += '/';
+    }
+  }
+
+private:
+  std::string save_path_prefix{};
+  void plot_graph(TGraph2D &gh, TVector3 init, TVector3 exit, unsigned int slot,
+                  ULong64_t entry, std::string name = "") {
+    auto c1 = std::make_unique<TCanvas>();
+    gh.Draw("PCOLZ");
+    gh.SetMarkerStyle(21);
+    gh.SetMarkerSize(0.8);
+    // auto *min = new TGraph2D();
+    auto mark = std::make_unique<TGraph2D>();
+    mark->SetPoint(0, init.Theta(), init.Phi(), 1000);
+    mark->SetPoint(1, exit.Theta(), exit.Phi(), 1000);
+    mark->SetMarkerStyle(29);
+    mark->SetMarkerColor(kRed);
+    mark->Draw("Psame");
+    c1->Draw();
+    c1->SetTitle("plothittime");
+    gPad->GetView()->TopView();
+    gPad->Update();
+    // auto path = (save_path_prefix + name + std::to_string(slot) + "_" +
+    //              std::to_string(entry) + ".png");
+    // std::cout << "saving to " << path << std::endl;
+    c1->SaveAs((save_path_prefix + name + std::to_string(slot) + "_" +
+                std::to_string(entry) + ".png")
+                   .c_str());
+    c1->SaveAs((save_path_prefix + name + std::to_string(slot) + "_" +
+                std::to_string(entry) + ".pdf")
+                   .c_str());
+    // c1->SaveAs("plot.pdf");
+  };
 };
 
 REGISTER_PROCESS_NODE(process);

@@ -3,7 +3,7 @@
 
 TH1 *draw_hists(ROOT::RDF::RNode node, std::string_view var,
                 std::string_view name, double xmin, double xmax, int nbins,
-                double norm, const nlohmann::json &cut,
+                double norm, nlohmann::json &cut,
                 std::string_view wname) {
   auto cut_func =
       cut.empty() ? std::make_unique<noop>() : get_node_process_callable(cut);
@@ -32,7 +32,7 @@ TH1 *draw_hists(ROOT::RDF::RNode node, std::string_view var,
 TH1 *draw_hists_2d(ROOT::RDF::RNode node, std::string_view varx,
                    std::string_view vary, std::string_view name, double xmin,
                    double xmax, double ymin, double ymax, int nbinsx,
-                   int nbinsy, double norm, const nlohmann::json &cut,
+                   int nbinsy, double norm, nlohmann::json &cut,
                    std::string_view wname) {
   auto cut_func =
       cut.empty() ? std::make_unique<noop>() : get_node_process_callable(cut);

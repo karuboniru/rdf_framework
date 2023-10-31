@@ -15,7 +15,7 @@ include_directories(
     ${ROOT_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -O3 -march=native -Wall -Wextra -Wpedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -O0 -g3 -ggdb -march=native -Wall -Wextra -Wpedantic")
 add_subdirectory(example)
 
 file(GLOB SOURCES "src/*.cxx")

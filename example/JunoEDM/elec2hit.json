@@ -21,7 +21,12 @@
           "treename": "treeout",
           "filename": "process.root",
           "plot_file": "plot_kaon.root",
-          "func": "process",
+          "func": {
+            "name": "process",
+            "config": {
+              "save_path_prefix": "./plot"
+            }
+          },
           "output": [
             "plotnpe",
             "plothittime",
@@ -33,7 +38,8 @@
             "initpoint",
             "exitpoint",
             "m_EventID",
-            "m_RunID"
+            "m_RunID",
+            "initP"
           ]
         }
       ]
