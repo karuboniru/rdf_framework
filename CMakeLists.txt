@@ -3,8 +3,12 @@ project(nuanalysis)
 # set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 set(CMAKE_CXX_STANDARD 17)
 include(FetchContent)
-FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz)
-FetchContent_MakeAvailable(json)
+find_package(nlohmann_json)
+if(NOT nlohmann_json_FOUND)
+    FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz)
+    FetchContent_MakeAvailable(json)
+endif()
+
 find_package(ROOT REQUIRED)
 include("${ROOT_USE_FILE}")
 include_directories(
@@ -14,7 +18,9 @@ include_directories(
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -O3 -march=native -Wall -Wextra -Wpedantic")
 add_subdirectory(example)
 
-add_executable(main main.cxx)
+file(GLOB SOURCES "src/*.cxx")
+
+add_executable(main main.cxx ${SOURCES})
 set_property(TARGET main PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(main ROOT::ROOTDataFrame nlohmann_json::nlohmann_json ${CMAKE_DL_LIBS})
 install(TARGETS main DESTINATION bin)
@@ -27,3 +33,4 @@ add_executable(merge_plot merge_plot.cxx)
 target_compile_options(merge_plot PRIVATE -fconcepts)
 target_link_libraries(merge_plot ROOT::Tree  ROOT::Hist ROOT::Gpad nlohmann_json::nlohmann_json ${CMAKE_DL_LIBS})
 install(TARGETS merge_plot DESTINATION bin)
+
