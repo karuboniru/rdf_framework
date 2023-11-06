@@ -40,7 +40,9 @@ int main(int argc, char **argv) {
     buffer << json_file.rdbuf();
     std::stringstream{buffer.str() | env_handler::get_instance()} >> j;
   }
-  auto filechain = prepare_chain(j);
+  // friend_chains is not actually used
+  // but we need to keep it alive
+  auto &&[filechain, friend_chains] = prepare_chain(j);
   ROOT::RDataFrame df(*filechain);
   auto rootnode = ROOT::RDF::AsRNode(df);
 

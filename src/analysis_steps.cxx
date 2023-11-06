@@ -9,23 +9,23 @@
 #include <dlfcn.h>
 #include <exception>
 #include <memory>
+#include <tuple>
 
-std::unique_ptr<TChain> prepare_chain(nlohmann::json &j) {
+std::tuple<std::unique_ptr<TChain>, std::vector<std::unique_ptr<TChain>>>
+prepare_chain(nlohmann::json &j) {
+  std::tuple<std::unique_ptr<TChain>, std::vector<std::unique_ptr<TChain>>> ret;
   std::vector<std::string> file_paths{};
   for (auto &file : j["files"]) {
     auto expanded_paths = expand_wildcard_path(file.get<std::string>());
     file_paths.insert(file_paths.end(), expanded_paths.begin(),
                       expanded_paths.end());
   }
-  auto filechain = std::make_unique<TChain>();
+  auto &&[filechain, friend_chains] = ret;
   for (auto &file : file_paths) {
     filechain->AddFile(
         (file + "?#" + j["treename"].get<std::string>()).c_str());
   }
-  std::vector<std::unique_ptr<TChain>> friend_chains{};
-  // if (j.find("friend_trees") != j.end())
   for (auto &friend_tree : j["friend_trees"]) {
-    // std::cout << "Adding friend tree: " << friend_tree << std::endl;
     auto &chain = friend_chains.emplace_back(std::make_unique<TChain>());
     for (auto &file : file_paths) {
       chain->AddFile(
@@ -33,7 +33,7 @@ std::unique_ptr<TChain> prepare_chain(nlohmann::json &j) {
     }
     filechain->AddFriend(chain.get(), friend_tree.value("alias", "").c_str());
   }
-  return filechain;
+  return ret;
 }
 
 void plugin_handle(ROOT::RDF::RNode rootnode, nlohmann::json &entry) {
@@ -63,8 +63,7 @@ void plugin_handle(ROOT::RDF::RNode rootnode, nlohmann::json &entry) {
 }
 
 void analysis_entry_handle(ROOT::RDF::RNode preprocessed_node,
-                           nlohmann::json &analysis_entry,
-                           double norm_factor) {
+                           nlohmann::json &analysis_entry, double norm_factor) {
 
   auto plots_file = std::make_unique<TFile>(
       analysis_entry["plot_file"].get<std::string>().c_str(), "RECREATE");
