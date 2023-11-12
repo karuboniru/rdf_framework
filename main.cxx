@@ -2,7 +2,6 @@
 #include <TChain.h>
 #include <common.h>
 #include <fstream>
-#include <functional>
 #include <iostream>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -11,9 +10,6 @@
 
 #include "analysis_steps.h"
 #include "env_handler.h"
-#include "get_callable.h"
-#include "hist_draw.h"
-#include "wildcard_expand.h"
 
 int main(int argc, char **argv) {
   ROOT::EnableImplicitMT();
