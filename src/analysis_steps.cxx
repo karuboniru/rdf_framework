@@ -7,13 +7,12 @@
 #include <ROOT/RDF/InterfaceUtils.hxx>
 #include <TChain.h>
 #include <dlfcn.h>
-#include <exception>
 #include <memory>
 #include <tuple>
 
 std::tuple<std::unique_ptr<TChain>, std::vector<std::unique_ptr<TChain>>>
 prepare_chain(nlohmann::json &j) {
-  std::tuple<std::unique_ptr<TChain>, std::vector<std::unique_ptr<TChain>>> ret;
+  std::tuple<std::unique_ptr<TChain>, std::vector<std::unique_ptr<TChain>>> ret{};
   std::vector<std::string> file_paths{};
   for (auto &file : j["files"]) {
     auto expanded_paths = expand_wildcard_path(file.get<std::string>());
@@ -21,6 +20,7 @@ prepare_chain(nlohmann::json &j) {
                       expanded_paths.end());
   }
   auto &&[filechain, friend_chains] = ret;
+  filechain = std::make_unique<TChain>();
   for (auto &file : file_paths) {
     filechain->AddFile(
         (file + "?#" + j["treename"].get<std::string>()).c_str());
