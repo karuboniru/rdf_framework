@@ -12,37 +12,35 @@
       "treename": "Meta/navigator"
     }
   ],
-  "plugins": [
-    {
-      "name": "process",
-      "plugin": "/home/yan/code/rdf_framework_juno/build/lib/libelec2hit.so",
-      "analysis": [
-        {
-          "treename": "treeout",
-          "filename": "process.root",
-          "plot_file": "plot_kaon.root",
-          "func": {
-            "name": "process",
-            "config": {
-              "save_path_prefix": "./plot"
-            }
-          },
-          "output": [
-            "plotnpe",
-            "plothittime",
-            "plotamplitude",
-            "init_theta",
-            "init_phi",
-            "exit_theta",
-            "exit_phi",
-            "initpoint",
-            "exitpoint",
-            "m_EventID",
-            "m_RunID",
-            "initP"
-          ]
-        }
-      ]
-    }
-  ]
+  "plugins": {
+    "name": "process",
+    "plugin": "/home/yan/code/rdf_framework_juno/build/lib/libelec2hit.so",
+    "analysis": [
+      {
+        "treename": "treeout",
+        "filename": "process.root",
+        "plot_file": "plot_kaon.root",
+        "func": {
+          "name": "process",
+          "config": {
+            "save_path_prefix": "./plot"
+          }
+        },
+        "output": [
+          "plotnpe",
+          "plothittime",
+          "plotamplitude",
+          "init_theta",
+          "init_phi",
+          "exit_theta",
+          "exit_phi",
+          "initpoint",
+          "exitpoint",
+          "m_EventID",
+          "m_RunID",
+          "initP"
+        ]
+      }
+    ]
+  }
 }

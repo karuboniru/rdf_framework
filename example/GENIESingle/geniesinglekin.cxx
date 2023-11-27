@@ -7,7 +7,7 @@ public:
   ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
     return df
         .Define("particle_p4",
-                [=](int StdHepN, ROOT::RVec<double> &StdHepP4,
+                [=, this](int StdHepN, ROOT::RVec<double> &StdHepP4,
                     ROOT::RVec<int> &StdHepPdg, ROOT::RVec<int> &StdHepStatus) {
                   ROOT::RVec<TLorentzVector> particle_p4;
                   for (int i = 0; i < StdHepN; i++) {

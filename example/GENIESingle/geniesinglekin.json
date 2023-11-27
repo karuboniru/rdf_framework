@@ -3,64 +3,62 @@
     "/home/yan/neutrino/GENIE/20.gtrac.root"
   ],
   "treename": "gRooTracker",
-  "plugins": [
-    {
-      "name": "GENIESingleKin",
-      "plugin": "example/GENIESingle/libgeniesinglekin.so",
-      "normalize": {
-        "name": "normalize_factor_cc",
-        "config": {
-          "filename": "/home/yan/neutrino/GENIE/G18_10b_02_11b.root",
-          "obj_path": "nu_mu_C12/tot_cc",
-          "Z": 12
-        }
-      },
-      "analysis": [
-        {
-          "treename": "treeout",
-          "plot_file": "plot.root",
-          "filename": "proton_kin.root",
-          "func": {
-            "name": "GENIESingleKin",
-            "config": {
-              "pdg": 2212
-            }
+  "plugins": {
+    "name": "GENIESingleKin",
+    "plugin": "example/GENIESingle/libgeniesinglekin.so",
+    "normalize": {
+      "name": "normalize_factor_cc",
+      "config": {
+        "filename": "/home/yan/neutrino/GENIE/G18_10b_02_11b.root",
+        "obj_path": "nu_mu_C12/tot_cc",
+        "Z": 12
+      }
+    },
+    "analysis": [
+      {
+        "treename": "treeout",
+        "plot_file": "plot.root",
+        "filename": "proton_kin.root",
+        "func": {
+          "name": "GENIESingleKin",
+          "config": {
+            "pdg": 2212
+          }
+        },
+        "output": [
+          "particleE",
+          "theta"
+        ],
+        "plots": [
+          {
+            "var": "particleE",
+            "name": "particleE",
+            "xmin": 0,
+            "xmax": 0,
+            "bins": 128
           },
-          "output": [
-            "particleE",
-            "theta"
-          ],
-          "plots": [
-            {
-              "var": "particleE",
-              "name": "particleE",
-              "xmin": 0,
-              "xmax": 0,
-              "bins": 128
-            },
-            {
-              "var": "theta",
-              "name": "theta",
-              "xmin": 0,
-              "xmax": 0,
-              "bins": 128
-            }
-          ],
-          "plot_2d": [
-            {
-              "varx": "particleE",
-              "vary": "particleE",
-              "name": "theta",
-              "xmin": 0,
-              "xmax": 1,
-              "ymin": 0,
-              "ymax": 1,
-              "binsx": 128,
-              "binsy": 128
-            }
-          ]
-        }
-      ]
-    }
-  ]
+          {
+            "var": "theta",
+            "name": "theta",
+            "xmin": 0,
+            "xmax": 0,
+            "bins": 128
+          }
+        ],
+        "plot_2d": [
+          {
+            "varx": "particleE",
+            "vary": "particleE",
+            "name": "theta",
+            "xmin": 0,
+            "xmax": 1,
+            "ymin": 0,
+            "ymax": 1,
+            "binsx": 128,
+            "binsy": 128
+          }
+        ]
+      }
+    ]
+  }
 }

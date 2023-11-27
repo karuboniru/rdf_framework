@@ -1,4 +1,6 @@
+#include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
+#include <RVersion.h>
 #include <TChain.h>
 #include <common.h>
 #include <fstream>
@@ -12,6 +14,7 @@
 #include "env_handler.h"
 
 int main(int argc, char **argv) {
+  TH1::AddDirectory(false);
   ROOT::EnableImplicitMT();
   if (argc < 2) {
     std::cout << "Usage: " << argv[0] << " <json_file>" << std::endl;
@@ -40,11 +43,13 @@ int main(int argc, char **argv) {
   // but we need to keep it alive
   auto &&[filechain, friend_chains] = prepare_chain(j);
   ROOT::RDataFrame df(*filechain);
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6, 30, 0)
+  ROOT::RDF::Experimental::AddProgressBar(df);
+#endif
+
   auto rootnode = ROOT::RDF::AsRNode(df);
 
-  for (auto &entry : j["plugins"]) {
-    plugin_handle(rootnode, entry);
-  }
+  plugin_handle(rootnode, j["plugins"]);
 
   return 0;
 }
