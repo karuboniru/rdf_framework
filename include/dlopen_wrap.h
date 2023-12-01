@@ -9,8 +9,8 @@ public:
   ~dlopen_wrap();
   void *get_handle();
   void *get_symbol(const char *symbol);
-  dlopen_wrap(dlopen_wrap &&) = default;
-  dlopen_wrap &operator=(dlopen_wrap &&) = default;
+  dlopen_wrap(dlopen_wrap &&);
+  dlopen_wrap &operator=(dlopen_wrap &&);
 
 private:
   void *handle{};

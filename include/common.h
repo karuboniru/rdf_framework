@@ -22,7 +22,7 @@ public:
   std::unique_ptr<ProcessNodeT<T>> create(const std::string &name) const {
     auto it = creator.find(name);
     if (it == creator.end()) {
-      throw std::runtime_error("No creator for type " + name);
+      return nullptr;
     }
     return it->second();
   }

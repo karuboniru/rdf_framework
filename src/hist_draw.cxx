@@ -4,11 +4,11 @@
 #include <string_view>
 
 ROOT::RDF::RNode do_cut(ROOT::RDF::RNode node, nlohmann::json &cut) {
-  try {
-    auto cut_func =
-        cut.empty() ? std::make_unique<noop>() : get_node_process_callable(cut);
+  auto cut_func =
+      cut.empty() ? std::make_unique<noop>() : get_node_process_callable(cut);
+  if (cut_func)
     return (*cut_func)(node);
-  } catch (std::runtime_error &e) {
+  else {
     auto cutstring = cut.get<std::string>();
     std::cout << "Failed to parse cut: " << cutstring << " as process node"
               << " passing it as string cut instead" << std::endl;
@@ -20,10 +20,6 @@ ROOT::RDF::RResultPtr<TH1D>
 draw_hists(ROOT::RDF::RNode noderaw, std::string_view var,
            std::string_view name, double xmin, double xmax, int nbins,
            nlohmann::json &cut, std::string_view wname) {
-  //   auto cut_func =
-  //       cut.empty() ? std::make_unique<noop>() :
-  //       get_node_process_callable(cut);
-  //   node = (*cut_func)(node);
   auto node = do_cut(noderaw, cut);
   auto hist = wname.empty()
                   ? node.Histo1D(ROOT::RDF::TH1DModel{name.data(), var.data(),

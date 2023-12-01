@@ -3,6 +3,8 @@
 #include <RVersion.h>
 #include <TChain.h>
 #include <common.h>
+#include <cstdlib>
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -43,13 +45,38 @@ int main(int argc, char **argv) {
   // but we need to keep it alive
   auto &&[filechain, friend_chains] = prepare_chain(j);
   ROOT::RDataFrame df(*filechain);
-#if ROOT_VERSION_CODE >= ROOT_VERSION(6, 30, 0)
-  ROOT::RDF::Experimental::AddProgressBar(df);
-#endif
 
   auto rootnode = ROOT::RDF::AsRNode(df);
 
-  plugin_handle(rootnode, j["plugins"]);
+  auto &&plugins_entry = j["plugins"];
+  if (plugins_entry.is_array()) {
+    for (auto &&p : plugins_entry) {
+      try {
+        plugin_handle(rootnode, p);
+      } catch (std::exception &e) {
+        std::cerr << "Failed to run plugin: " << p["name"].get<std::string>()
+                  << "\n\t" << e.what() << "\n\t"
+                  << "Skipping..." << std::endl;
+      } catch (...) {
+        std::cerr << "Failed to run plugin: " << p["name"].get<std::string>()
+                  << "\n\t"
+                  << "Skipping..." << std::endl;
+      }
+    }
+  } else {
+    try {
+      plugin_handle(rootnode, plugins_entry);
+    } catch (std::exception &e) {
+      std::cerr << "Failed to run plugin: "
+                << plugins_entry["name"].get<std::string>() << "\n\t"
+                << e.what() << std::endl;
+      std::exit(1);
+    } catch (...) {
+      std::cerr << "Failed to run plugin: "
+                << plugins_entry["name"].get<std::string>() << std::endl;
+      std::exit(1);
+    }
+  }
 
   return 0;
 }

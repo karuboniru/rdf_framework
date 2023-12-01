@@ -40,13 +40,16 @@ prepare_chain(nlohmann::json &j) {
 auto analysis_entry_handle(ROOT::RDF::RNode preprocessed_node,
                            nlohmann::json &analysis_entry) {
   auto func = get_node_process_callable(analysis_entry["func"]);
+  if (!func)
+    throw std::runtime_error("Failed to get analysis function");
   auto result_node = (*func)(preprocessed_node);
   std::tuple<
       std::string, std::vector<ROOT::RDF::RResultPtr<TH1D>>,
       std::vector<std::pair<THStack, std::vector<ROOT::RDF::RResultPtr<TH1D>>>>,
       std::vector<ROOT::RDF::RResultPtr<TH2D>>,
       ROOT::RDF::RResultPtr<
-          ROOT::RDF::RInterface<ROOT::Detail::RDF::RLoopManager>>> ret{};
+          ROOT::RDF::RInterface<ROOT::Detail::RDF::RLoopManager>>>
+      ret{};
   auto &&[plot_file, hist1ds, plots, hist2ds, snapshot_action] = ret;
   plot_file = analysis_entry["plot_file"].get<std::string>();
 
@@ -113,7 +116,9 @@ auto analysis_entry_handle(ROOT::RDF::RNode preprocessed_node,
 
 void plugin_handle(ROOT::RDF::RNode rootnode, nlohmann::json &entry) {
   std::cout << "Processing " << entry["name"] << std::endl;
-
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6, 30, 0)
+  ROOT::RDF::Experimental::AddProgressBar(rootnode);
+#endif
   std::string so_name = entry["plugin"];
   dlopen_wrap so(so_name);
 
@@ -121,6 +126,8 @@ void plugin_handle(ROOT::RDF::RNode rootnode, nlohmann::json &entry) {
       entry.find("preprocess") != entry.end()
           ? get_node_process_callable(entry["preprocess"])
           : std::make_unique<noop>();
+  if (!preprocess)
+    throw std::runtime_error("Failed to get preprocess function");
 
   auto preprocessed_node = (*preprocess)(rootnode);
 
@@ -129,6 +136,8 @@ void plugin_handle(ROOT::RDF::RNode rootnode, nlohmann::json &entry) {
   if (entry.find("normalize") != entry.end()) {
     auto normalize_conf = entry["normalize"];
     normalize_func = get_normalize_callable(normalize_conf);
+    if (!normalize_func)
+      throw std::runtime_error("Failed to get normalize function");
   }
 
   std::vector<std::tuple<
