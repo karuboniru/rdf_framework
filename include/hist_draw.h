@@ -14,3 +14,5 @@ draw_hists_2d(ROOT::RDF::RNode node, std::string_view varx,
               std::string_view vary, std::string_view name, double xmin,
               double xmax, double ymin, double ymax, int nbinsx, int nbinsy,
               nlohmann::json &cut, std::string_view wname = "");
+
+ROOT::RDF::RNode do_cut(ROOT::RDF::RNode node, nlohmann::json &cut);

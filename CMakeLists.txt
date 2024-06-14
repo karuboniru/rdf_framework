@@ -8,6 +8,7 @@ if(NOT nlohmann_json_FOUND)
 endif()
 
 find_package(ROOT REQUIRED)
+find_package(Boost)
 include("${ROOT_USE_FILE}")
 include_directories(
     ${ROOT_INCLUDE_DIRS}
@@ -23,9 +24,11 @@ set_property(TARGET main PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(main ROOT::ROOTDataFrame nlohmann_json::nlohmann_json ${CMAKE_DL_LIBS})
 install(TARGETS main DESTINATION bin)
 
-add_executable(gibuu_final_2_root gibuu_final_2_root.cxx)
-target_link_libraries(gibuu_final_2_root ROOT::Tree ${CMAKE_DL_LIBS})
-install(TARGETS gibuu_final_2_root DESTINATION bin)
+if(Boost_FOUND)
+    add_executable(gibuu_final_2_root gibuu_final_2_root.cxx)
+    target_link_libraries(gibuu_final_2_root ROOT::Tree ${CMAKE_DL_LIBS})
+    install(TARGETS gibuu_final_2_root DESTINATION bin)
+endif()
 
 add_executable(merge_plot merge_plot.cxx)
 target_compile_options(merge_plot PRIVATE -fconcepts)

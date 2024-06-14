@@ -9,6 +9,7 @@
 #include <dlfcn.h>
 #include <memory>
 #include <tuple>
+#include <unordered_map>
 
 std::tuple<std::unique_ptr<TChain>, std::vector<std::unique_ptr<TChain>>>
 prepare_chain(nlohmann::json &j) {
@@ -53,6 +54,26 @@ auto analysis_entry_handle(ROOT::RDF::RNode preprocessed_node,
   auto &&[plot_file, hist1ds, plots, hist2ds, snapshot_action] = ret;
   plot_file = analysis_entry["plot_file"].get<std::string>();
 
+  auto cutset = analysis_entry.value("cutset", nlohmann::json{});
+  std::vector<std::tuple<std::string, ROOT::RDF::RNode>> cut_nodes{};
+  for (auto &&cuts : cutset) {
+    std::vector<std::tuple<std::string, ROOT::RDF::RNode>>
+        cut_nodes_next_layer{};
+    for (auto &&cut : cuts) {
+      std::cout << "cut: " << cut["cut"] << std::endl;
+
+      cut_nodes_next_layer.emplace_back(cut["name"],
+                                        do_cut(result_node, cut["cut"]));
+      for (auto &&[name, node] : cut_nodes) {
+        cut_nodes_next_layer.emplace_back(name + "_" +
+                                              cut["name"].get<std::string>(),
+                                          do_cut(node, cut["cut"]));
+      }
+    }
+    cut_nodes.insert(cut_nodes.end(), cut_nodes_next_layer.begin(),
+                     cut_nodes_next_layer.end());
+  }
+
   // plot 1D hists
   for (auto &plotentry : analysis_entry["plots"]) {
     std::string var = plotentry["var"];
@@ -64,6 +85,10 @@ auto analysis_entry_handle(ROOT::RDF::RNode preprocessed_node,
     std::string wname = plotentry.value("wname", "");
     hist1ds.emplace_back(
         draw_hists(result_node, var, name, xmin, xmax, nbins, cut, wname));
+    for (auto &[cutname, cutnode] : cut_nodes) {
+      hist1ds.emplace_back(draw_hists(cutnode, var, name + "_" + cutname, xmin,
+                                      xmax, nbins, cut, wname));
+    }
   }
 
   // plot Stacks
@@ -99,6 +124,11 @@ auto analysis_entry_handle(ROOT::RDF::RNode preprocessed_node,
     hist2ds.emplace_back(draw_hists_2d(result_node, varx, vary, name, xmin,
                                        xmax, ymin, ymax, nbinsx, nbinsy, cut,
                                        wname));
+    for (auto &[cutname, cutnode] : cut_nodes) {
+      hist2ds.emplace_back(draw_hists_2d(cutnode, varx, vary,
+                                         name + "_" + cutname, xmin, xmax, ymin,
+                                         ymax, nbinsx, nbinsy, cut, wname));
+    }
   }
   {
     auto &&collist = analysis_entry["output"].get<std::vector<std::string>>();

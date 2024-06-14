@@ -12,3 +12,16 @@ class noop : public ProcessNodeI {
 public:
   ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override { return df; }
 };
+
+class StrCut : ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return df.Filter(cut);
+  }
+  void configure(const nlohmann::json &conf) override {
+    cut = conf["cut"].get<std::string>();
+  };
+
+private:
+  std::string cut{};
+};

@@ -1,21 +1,11 @@
 #include "ROOT/RVec.hxx"
-#include "TF1.h"
 #include "TLorentzVector.h"
 #include "TObjString.h"
-#include "TRandom3.h"
 #include <ROOT/RDF/RInterface.hxx>
 #include <ROOT/RDataFrame.hxx>
 #include <TLorentzVector.h>
-#include <array>
-#include <cassert>
 #include <common.h>
-#include <iostream>
-#include <map>
-#include <set>
-#include <sstream>
 #include <tki_general.h>
-#include <type_traits>
-#include <vector>
 
 event::channel getmode_nuwro(TObjString &code) {
   const int mode = code.GetString().Atoi();
@@ -91,7 +81,6 @@ public:
   }
 };
 
-
 class normalize_factor_CC : public NormalizeI {
 public:
   double operator()(ROOT::RDF::RNode df) override {
@@ -104,3 +93,84 @@ public:
 REGISTER_NORMALIZE(normalize_factor_CC);
 REGISTER_PROCESS_NODE(pre);
 
+class CCRESPure : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return df.Filter(
+        [](event &e, int flag_delta) {
+          return e.get_mode() == event::channel::RES && flag_delta;
+        },
+        {"event", "flag_delta"}, "CUTRES");
+  }
+};
+
+REGISTER_PROCESS_NODE(CCRESPure)
+
+class CCRESPYTHIA : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return df.Filter(
+        [](event &e, int flag_delta) {
+          return e.get_mode() == event::channel::RES && !flag_delta;
+        },
+        {"event", "flag_delta"}, "CUTRES");
+  }
+};
+
+REGISTER_PROCESS_NODE(CCRESPYTHIA)
+
+class CCRESPure1pi : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return df.Filter(
+        [](event &e, int flag_delta) {
+          return e.get_mode() == event::channel::RES && flag_delta &&
+                 (e.count_out(211) + e.count_out(111) + e.count_out(-211)) == 1;
+        },
+        {"event", "flag_delta"}, "CUTRES");
+  }
+};
+
+REGISTER_PROCESS_NODE(CCRESPure1pi)
+
+class CCRESPYTHIA1pi : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return df.Filter(
+        [](event &e, int flag_delta) {
+          return e.get_mode() == event::channel::RES && !flag_delta &&
+                 (e.count_out(211) + e.count_out(111) + e.count_out(-211)) == 1;
+        },
+        {"event", "flag_delta"}, "CUTRES");
+  }
+};
+
+REGISTER_PROCESS_NODE(CCRESPYTHIA1pi)
+
+class CCRESPureMpi : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return df.Filter(
+        [](event &e, int flag_delta) {
+          return e.get_mode() == event::channel::RES && flag_delta &&
+                 (e.count_out(211) + e.count_out(111) + e.count_out(-211)) > 1;
+        },
+        {"event", "flag_delta"}, "CUTRES");
+  }
+};
+
+REGISTER_PROCESS_NODE(CCRESPureMpi)
+
+class CCRESPYTHIAMpi : public ProcessNodeI {
+public:
+  ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
+    return df.Filter(
+        [](event &e, int flag_delta) {
+          return e.get_mode() == event::channel::RES && !flag_delta &&
+                 (e.count_out(211) + e.count_out(111) + e.count_out(-211)) > 1;
+        },
+        {"event", "flag_delta"}, "CUTRES");
+  }
+};
+
+REGISTER_PROCESS_NODE(CCRESPYTHIAMpi)

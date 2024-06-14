@@ -1,0 +1,101 @@
+{
+  "files": [
+    "/var/home/yan/neutrino/gentest/small.gtrac.root"
+  ],
+  "treename": "gRooTracker",
+  "plugins": [
+    {
+      "name": "GENIE",
+      "plugin": "/var/home/yan/code/rdf_framework_juno/build/example/ganymede-reco/libgenerator_event.so",
+      "preprocess": "GENIE2Event",
+      "normalize": {
+        "name": "MIX_NORMALIZE",
+        "config": {
+          "filename": "/var/home/yan/neutrino/spline/full/genie_spline/G18_02a_00_000/3.02.00-routine_validation_01-xsec_vA/total_xsec.root"
+        }
+      },
+      "analysis": [
+        {
+          "treename": "treeout",
+          "filename": "snapshot.root",
+          "plot_file": "plot.root",
+          "func": "ANALYSIS",
+          "output": [
+            "Q2",
+            "W",
+            "cc_flag",
+            "y",
+            "xBj",
+            "npi0",
+            "npi_charged",
+            "n_neutron"
+          ],
+          "plots": [
+            {
+              "var": "Q2",
+              "name": "Q2",
+              "xmin": 0,
+              "xmax": 10,
+              "bins": 128
+            },
+            {
+              "var": "W",
+              "name": "W",
+              "xmin": 0,
+              "xmax": 6,
+              "bins": 128
+            },
+            {
+              "var": "xBj",
+              "name": "xBj",
+              "xmin": 0,
+              "xmax": 1.1,
+              "bins": 128
+            },
+            {
+              "var": "y",
+              "name": "y",
+              "xmin": 0,
+              "xmax": 1.0,
+              "bins": 128
+            }
+          ],
+          "cutset": [
+            [
+              {
+                "name": "0pi",
+                "cut": "npi0==0 && npi_charged==0"
+              },
+              {
+                "name": "1pi0",
+                "cut": "npi0==1 && npi_charged==0"
+              },
+              {
+                "name": "1pic",
+                "cut": "npi0==0 && npi_charged==1"
+              },
+              {
+                "name": "Npi",
+                "cut": "npi0 + npi_charged > 1"
+              }
+            ],
+            [
+              {
+                "name": "0n",
+                "cut": "n_neutron==0"
+              },
+              {
+                "name": "1n",
+                "cut": "n_neutron==1"
+              },
+              {
+                "name": "Nn",
+                "cut": "n_neutron>1"
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

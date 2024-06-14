@@ -10,8 +10,8 @@ ROOT::RDF::RNode do_cut(ROOT::RDF::RNode node, nlohmann::json &cut) {
     return (*cut_func)(node);
   else {
     auto cutstring = cut.get<std::string>();
-    std::cout << "Failed to parse cut: " << cutstring << " as process node"
-              << " passing it as string cut instead" << std::endl;
+    // std::cout << "Failed to parse cut: " << cutstring << " as process node"
+    //           << " passing it as string cut instead" << std::endl;
     return node.Filter(cut.get<std::string>());
   }
 }
