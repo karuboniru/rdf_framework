@@ -10,6 +10,7 @@ public:
   void add_particle_out(int, TLorentzVector);
   void set_interaction(interaction_channel);
   void set_hit_nucleon(TLorentzVector p4) { nucleon = p4; }
+  void set_is_cc(bool cc) { is_cc = cc; }
 
   TLorentzVector get_leading_out(int) const;
   size_t count_particle_out(int) const;
@@ -20,6 +21,7 @@ public:
   TLorentzVector get_nucleon() const { return nucleon; }
   TLorentzVector get_primary_lepton() const { return primary_lepton; }
   interaction_channel get_interaction() const { return interaction; }
+  bool get_is_cc() const { return is_cc; }
 
 private:
   std::unordered_multimap<int, TLorentzVector> particles_in{};
@@ -27,4 +29,5 @@ private:
   interaction_channel interaction;
   int neutrino_pdg{}, nucleus_pdg{};
   TLorentzVector primary_lepton{}, neutrino{}, nucleus{}, nucleon{};
+  bool is_cc{false};
 };

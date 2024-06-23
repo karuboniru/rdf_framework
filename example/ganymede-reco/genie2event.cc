@@ -30,6 +30,8 @@ class GENIE2Event : public ProcessNodeI {
                 e.set_interaction(interaction_channel::unknown);
               }
 
+              e.set_is_cc(str.Contains("CC"));
+
               for (int i = 0; i < StdHepN; i++) {
                 switch (StdHepStatus[i]) {
                 case 0:
@@ -63,11 +65,8 @@ class GENIE2Event : public ProcessNodeI {
                      GenEvent.get_interaction() != interaction_channel::coh;
             },
             {"GenEvent"})
-        .Define("cc_flag",
-                [](const TObjString &EvtCode) {
-                  return EvtCode.GetString().Contains("CC");
-                },
-                {"EvtCode"});
+        .Define("cc_flag", [](const event &e) { return e.get_is_cc(); },
+                {"GenEvent"});
   };
 
   void configure(const nlohmann::json &) override {};
