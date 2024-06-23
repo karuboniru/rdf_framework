@@ -116,13 +116,13 @@ public:
     auto nu_mu_bar_H1 =
         static_cast<TGraph *>(root_file.Get("nu_mu_bar_H1/tot_cc")->Clone());
     ROOT::RDF::TH1DModel h_model{"", "", 20, 0, 20.};
-    auto get_hist_neutrinoE = [&](int neutrino, int nucleus) {
-      return df
-          .Filter(
+    auto dfcc = df.Filter(
               [](const TObjString &EvtCode) {
                 return EvtCode.GetString().Contains("CC");
               },
-              {"EvtCode"})
+              {"EvtCode"});
+    auto get_hist_neutrinoE_cc = [&](int neutrino, int nucleus) {
+      return dfcc
           .Filter(
               [=](const ROOT::RVec<int> &StdHepPdg) {
                 return StdHepPdg[0] == neutrino && StdHepPdg[1] == nucleus;
@@ -134,11 +134,11 @@ public:
               {"StdHepP4"})
           .Histo1D(h_model, "neutrinoE");
     };
-    auto h_nu_mu_C12 = get_hist_neutrinoE(14, 1000060120);
-    auto h_nu_mu_bar_C12 = get_hist_neutrinoE(-14, 1000060120);
-    auto h_nu_mu_H1 = get_hist_neutrinoE(14, 2212);
-    auto h_nu_mu_bar_H1 = get_hist_neutrinoE(-14, 2212);
-    auto event_count = df.Count().GetValue();
+    auto h_nu_mu_C12 = get_hist_neutrinoE_cc(14, 1000060120);
+    auto h_nu_mu_bar_C12 = get_hist_neutrinoE_cc(-14, 1000060120);
+    auto h_nu_mu_H1 = get_hist_neutrinoE_cc(14, 2212);
+    auto h_nu_mu_bar_H1 = get_hist_neutrinoE_cc(-14, 2212);
+    auto event_count = dfcc.Count().GetValue();
     auto total_fluxint = get_fuxint(h_nu_mu_C12.GetPtr(), nu_mu_C12) +
                          get_fuxint(h_nu_mu_bar_C12.GetPtr(), nu_mu_bar_C12) +
                          get_fuxint(h_nu_mu_H1.GetPtr(), nu_mu_H1) +
