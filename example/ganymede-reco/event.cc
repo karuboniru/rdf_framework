@@ -16,7 +16,8 @@ void event::add_particle_in(int pdg, TLorentzVector p4) {
 
 void event::add_particle_out(int pdg, TLorentzVector p4) {
   particles_out.insert({pdg, p4});
-  if ((abs(pdg) == 11 || abs(pdg) == 13) && primary_lepton.P() == 0)
+  // now consider the case of NC events
+  if ((abs(pdg) >= 11 || abs(pdg) <= 14) && primary_lepton.P() == 0)
     primary_lepton = p4;
 }
 
