@@ -67,18 +67,19 @@ class NuWro2Event : public ProcessNodeI {
                       StdHepPdg[i],
                       TLorentzVector{StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
                                      StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]});
-                  break;
-                case 1:
-                  e.add_particle_out(
-                      StdHepPdg[i],
-                      TLorentzVector{StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
-                                     StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]});
                   if (abs(StdHepPdg[i]) > 100 && !nucleon_found) {
                     e.set_hit_nucleon(TLorentzVector{
                         StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
                         StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]});
                     nucleon_found = true;
                   }
+                  break;
+                case 1:
+                  e.add_particle_out(
+                      StdHepPdg[i],
+                      TLorentzVector{StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
+                                     StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]});
+
                   break;
                 default:
                   break;
@@ -102,7 +103,6 @@ class NuWro2Event : public ProcessNodeI {
 
   void configure(const nlohmann::json &) override {};
 };
-
 
 class normalize_factor_NuWro : public NormalizeI {
 public:
