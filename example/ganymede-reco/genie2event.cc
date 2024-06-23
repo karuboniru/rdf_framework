@@ -119,6 +119,11 @@ public:
     auto get_hist_neutrinoE = [&](int neutrino, int nucleus) {
       return df
           .Filter(
+              [](const TObjString &EvtCode) {
+                return EvtCode.GetString().Contains("CC");
+              },
+              {"EvtCode"})
+          .Filter(
               [=](const ROOT::RVec<int> &StdHepPdg) {
                 return StdHepPdg[0] == neutrino && StdHepPdg[1] == nucleus;
               },

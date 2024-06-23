@@ -99,9 +99,10 @@ class NuWro2Event : public ProcessNodeI {
                 {"GenEvent"});
     ;
   }
+
+  void configure(const nlohmann::json &) override {};
 };
 
-REGISTER_PROCESS_NODE(NuWro2Event)
 
 class normalize_factor_NuWro : public NormalizeI {
 public:
@@ -110,6 +111,8 @@ public:
     auto num = df.Count();
     return mean.GetValue() / num.GetValue();
   }
+  void configure(const nlohmann::json &) override {};
 };
 
-REGISTER_NORMALIZE(normalize_factor_NuWro);
+REGISTER_PROCESS_NODE(NuWro2Event)
+REGISTER_NORMALIZE(normalize_factor_NuWro)
