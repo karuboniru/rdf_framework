@@ -117,10 +117,10 @@ public:
         static_cast<TGraph *>(root_file.Get("nu_mu_bar_H1/tot_cc")->Clone());
     ROOT::RDF::TH1DModel h_model{"", "", 20, 0, 20.};
     auto dfcc = df.Filter(
-              [](const TObjString &EvtCode) {
-                return EvtCode.GetString().Contains("CC");
-              },
-              {"EvtCode"});
+        [](const TObjString &EvtCode) {
+          return EvtCode.GetString().Contains("CC");
+        },
+        {"EvtCode"});
     auto get_hist_neutrinoE_cc = [&](int neutrino, int nucleus) {
       return dfcc
           .Filter(
@@ -139,13 +139,14 @@ public:
     auto h_nu_mu_H1 = get_hist_neutrinoE_cc(14, 2212);
     auto h_nu_mu_bar_H1 = get_hist_neutrinoE_cc(-14, 2212);
     auto event_count = dfcc.Count().GetValue();
-    auto total_fluxint = get_fuxint(h_nu_mu_C12.GetPtr(), nu_mu_C12) +
-                         get_fuxint(h_nu_mu_bar_C12.GetPtr(), nu_mu_bar_C12) +
-                         get_fuxint(h_nu_mu_H1.GetPtr(), nu_mu_H1) +
-                         get_fuxint(h_nu_mu_bar_H1.GetPtr(), nu_mu_bar_H1);
+    auto total_fluxint =
+        get_fuxint(h_nu_mu_C12.GetPtr(), nu_mu_C12) * 12 +
+        get_fuxint(h_nu_mu_bar_C12.GetPtr(), nu_mu_bar_C12) * 12 +
+        get_fuxint(h_nu_mu_H1.GetPtr(), nu_mu_H1) +
+        get_fuxint(h_nu_mu_bar_H1.GetPtr(), nu_mu_bar_H1);
     auto xsec_per_nucleus = event_count / total_fluxint;
     // per nucleus to per nucleon
-    auto res = xsec_per_nucleus / average_A() * 1e-38;
+    auto res = xsec_per_nucleus;
     std::cout << "Total event count: " << event_count << std::endl;
     std::cout << "Total fluxint: " << total_fluxint << std::endl;
     std::cout << "Cross section per nucleus: " << xsec_per_nucleus << std::endl;
