@@ -1,3 +1,4 @@
+#include "TLorentzVector.h"
 #include "common.h"
 #include <ROOT/RDF/HistoModels.hxx>
 #include <TF1.h>
@@ -59,6 +60,7 @@ class NuWro2Event : public ProcessNodeI {
                 break;
               }
               bool nucleon_found = false;
+              TLorentzVector miss_mom{}, nucleon_mom{};
               for (int i = 0; i < StdHepN; i++) {
                 switch (StdHepStatus[i]) {
                 case 0:
@@ -67,11 +69,17 @@ class NuWro2Event : public ProcessNodeI {
                       TLorentzVector{StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
                                      StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]});
                   if (abs(StdHepPdg[i]) > 100 && !nucleon_found) {
-                    e.set_hit_nucleon(TLorentzVector{
+                    // e.set_hit_nucleon(TLorentzVector{
+                    //     StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
+                    //     StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]});
+                    nucleon_mom = TLorentzVector{
                         StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
-                        StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]});
+                        StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]};
                     nucleon_found = true;
                   }
+                  miss_mom -=
+                      TLorentzVector{StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
+                                     StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]};
                   break;
                 case 1:
                   e.add_particle_out(
@@ -80,10 +88,17 @@ class NuWro2Event : public ProcessNodeI {
                                      StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]});
 
                   break;
+                case 2:
+                  miss_mom +=
+                      TLorentzVector{StdHepP4[4 * i + 0], StdHepP4[4 * i + 1],
+                                     StdHepP4[4 * i + 2], StdHepP4[4 * i + 3]};
+                  break;
                 default:
                   break;
                 }
               }
+
+              e.set_hit_nucleon(nucleon_mom + miss_mom);
 
               return e;
             },
