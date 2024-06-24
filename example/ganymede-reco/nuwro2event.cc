@@ -58,9 +58,8 @@ class NuWro2Event : public ProcessNodeI {
                 e.set_is_cc(false);
                 break;
               }
-
+              bool nucleon_found = false;
               for (int i = 0; i < StdHepN; i++) {
-                bool nucleon_found = false;
                 switch (StdHepStatus[i]) {
                 case 0:
                   e.add_particle_in(
