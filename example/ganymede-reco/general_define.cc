@@ -34,6 +34,10 @@ class ANALYSIS : public ProcessNodeI {
                   return el / enu;
                 },
                 {"GenEvent"})
+        .Define(
+            "lepton_p4",
+            [](const event &GenEvent) { return GenEvent.get_primary_lepton(); },
+            {"GenEvent"})
         .Define("npi0",
                 [](const event &GenEvent) {
                   return GenEvent.count_particle_out(111);

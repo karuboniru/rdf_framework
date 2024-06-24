@@ -144,12 +144,12 @@ public:
         get_fuxint(h_nu_mu_bar_C12.GetPtr(), nu_mu_bar_C12) * 12 +
         get_fuxint(h_nu_mu_H1.GetPtr(), nu_mu_H1) +
         get_fuxint(h_nu_mu_bar_H1.GetPtr(), nu_mu_bar_H1);
-    auto xsec_per_nucleus = event_count / total_fluxint;
+    auto xsec_per_nucleon = event_count / total_fluxint;
     // per nucleus to per nucleon
-    auto res = xsec_per_nucleus;
+    auto res = xsec_per_nucleon;
     std::cout << "Total event count: " << event_count << std::endl;
     std::cout << "Total fluxint: " << total_fluxint << std::endl;
-    std::cout << "Cross section per nucleus: " << xsec_per_nucleus << std::endl;
+    std::cout << "Cross section per nucleon: " << xsec_per_nucleon << std::endl;
     return res / event_count;
   }
 
