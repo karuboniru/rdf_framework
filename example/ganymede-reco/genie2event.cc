@@ -58,13 +58,13 @@ class GENIE2Event : public ProcessNodeI {
               return e;
             },
             {"StdHepN", "StdHepP4", "StdHepPdg", "StdHepStatus", "EvtCode"})
-        .Filter(
-            [](const event &GenEvent) {
-              return GenEvent.get_interaction() !=
-                         interaction_channel::unknown &&
-                     GenEvent.get_interaction() != interaction_channel::coh;
-            },
-            {"GenEvent"})
+        // .Filter(
+        //     [](const event &GenEvent) {
+        //       return GenEvent.get_interaction() !=
+        //                  interaction_channel::unknown &&
+        //              GenEvent.get_interaction() != interaction_channel::coh;
+        //     },
+        //     {"GenEvent"})
         .Define("cc_flag", [](const event &e) { return e.get_is_cc(); },
                 {"GenEvent"});
   };
