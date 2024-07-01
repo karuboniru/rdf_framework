@@ -1,5 +1,8 @@
+#include "TLorentzVector.h"
 #include <common.h>
 #include <event.h>
+
+constexpr double m_N = (0.93827210 + 0.93956540) / 2;
 
 class ANALYSIS : public ProcessNodeI {
   ROOT::RDF::RNode operator()(ROOT::RDF::RNode df) override {
@@ -24,6 +27,22 @@ class ANALYSIS : public ProcessNodeI {
                   auto lvq =
                       GenEvent.get_neutrino() - GenEvent.get_primary_lepton();
                   auto initN = GenEvent.get_nucleon();
+                  return Q2 / (2 * initN.Dot(lvq));
+                },
+                {"GenEvent", "Q2"})
+        .Define("W_rest",
+                [](const event &GenEvent) {
+                  auto p4_hadronic_system = TLorentzVector{0, 0, 0, m_N} +
+                                            GenEvent.get_neutrino() -
+                                            GenEvent.get_primary_lepton();
+                  return p4_hadronic_system.M();
+                },
+                {"GenEvent"})
+        .Define("xBj_rest",
+                [](const event &GenEvent, double Q2) {
+                  auto lvq =
+                      GenEvent.get_neutrino() - GenEvent.get_primary_lepton();
+                  auto initN = TLorentzVector{0, 0, 0, m_N};
                   return Q2 / (2 * initN.Dot(lvq));
                 },
                 {"GenEvent", "Q2"})

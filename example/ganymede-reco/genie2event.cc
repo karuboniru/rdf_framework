@@ -115,6 +115,16 @@ public:
         static_cast<TGraph *>(root_file.Get("nu_mu_H1/tot_cc")->Clone());
     auto nu_mu_bar_H1 =
         static_cast<TGraph *>(root_file.Get("nu_mu_bar_H1/tot_cc")->Clone());
+
+    auto nu_e_C12 =
+        static_cast<TGraph *>(root_file.Get("nu_e_C12/tot_cc")->Clone());
+    auto nu_e_bar_C12 =
+        static_cast<TGraph *>(root_file.Get("nu_e_bar_C12/tot_cc")->Clone());
+    auto nu_e_H1 =
+        static_cast<TGraph *>(root_file.Get("nu_e_H1/tot_cc")->Clone());
+    auto nu_e_bar_H1 =
+        static_cast<TGraph *>(root_file.Get("nu_e_bar_H1/tot_cc")->Clone());
+
     ROOT::RDF::TH1DModel h_model{"", "", 20, 0, 20.};
     auto dfcc = df.Filter(
         [](const TObjString &EvtCode) {
@@ -138,12 +148,23 @@ public:
     auto h_nu_mu_bar_C12 = get_hist_neutrinoE_cc(-14, 1000060120);
     auto h_nu_mu_H1 = get_hist_neutrinoE_cc(14, 2212);
     auto h_nu_mu_bar_H1 = get_hist_neutrinoE_cc(-14, 2212);
+
+    auto h_nu_e_C12 = get_hist_neutrinoE_cc(12, 1000060120);
+    auto h_nu_e_bar_C12 = get_hist_neutrinoE_cc(-12, 1000060120);
+    auto h_nu_e_H1 = get_hist_neutrinoE_cc(12, 2212);
+    auto h_nu_e_bar_H1 = get_hist_neutrinoE_cc(-12, 2212);
+
     auto event_count = dfcc.Count().GetValue();
     auto total_fluxint =
         get_fuxint(h_nu_mu_C12.GetPtr(), nu_mu_C12) * 12 +
         get_fuxint(h_nu_mu_bar_C12.GetPtr(), nu_mu_bar_C12) * 12 +
         get_fuxint(h_nu_mu_H1.GetPtr(), nu_mu_H1) +
-        get_fuxint(h_nu_mu_bar_H1.GetPtr(), nu_mu_bar_H1);
+        get_fuxint(h_nu_mu_bar_H1.GetPtr(), nu_mu_bar_H1) +
+        get_fuxint(h_nu_e_C12.GetPtr(), nu_e_C12) * 12 +
+        get_fuxint(h_nu_e_bar_C12.GetPtr(), nu_e_bar_C12) * 12 +
+        get_fuxint(h_nu_e_H1.GetPtr(), nu_e_H1) +
+        get_fuxint(h_nu_e_bar_H1.GetPtr(), nu_e_bar_H1);
+        
     auto xsec_per_nucleon = event_count / total_fluxint;
     // per nucleus to per nucleon
     auto res = xsec_per_nucleon;
