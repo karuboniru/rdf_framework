@@ -50,7 +50,7 @@ class ANALYSIS : public ProcessNodeI {
                 [](const event &GenEvent) {
                   auto enu = GenEvent.get_neutrino().E();
                   auto el = GenEvent.get_primary_lepton().E();
-                  return el / enu;
+                  return 1 - el / enu;
                 },
                 {"GenEvent"})
         .Define(
