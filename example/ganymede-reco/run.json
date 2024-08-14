@@ -58,6 +58,46 @@
               "xmin": 0,
               "xmax": 1.0,
               "bins": 128
+            },
+            {
+              "name": "th2d_Q2_W",
+              "bins_list": [
+                {
+                  "var": "Q2",
+                  "min": 0,
+                  "max": 10,
+                  "bins": 16
+                },
+                {
+                  "var": "W",
+                  "min": 0,
+                  "max": 10,
+                  "bins": 16
+                }
+              ]
+            },
+            {
+              "name": "th3d_Q2_W_xbj",
+              "bins_list": [
+                {
+                  "var": "Q2",
+                  "min": 0,
+                  "max": 10,
+                  "bins": 16
+                },
+                {
+                  "var": "W",
+                  "min": 0,
+                  "max": 10,
+                  "bins": 16
+                },
+                {
+                  "var": "xBj",
+                  "min": 0,
+                  "max": 1.2,
+                  "bins": 5
+                }
+              ]
             }
           ],
           "cutset": [
