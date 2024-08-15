@@ -57,6 +57,14 @@ class ANALYSIS : public ProcessNodeI {
             "lepton_p4",
             [](const event &GenEvent) { return GenEvent.get_primary_lepton(); },
             {"GenEvent"})
+        .Define(
+            "Enu",
+            [](const event &GenEvent) { return GenEvent.get_neutrino().E(); },
+            {"GenEvent"})
+        .Define("El", [](const TLorentzVector &p4) { return p4.E(); },
+                {"lepton_p4"})
+        .Define("q0", [](double enu, double el) { return enu - el; },
+                {"Enu", "El"})
         .Define("neutrino_p4",
                 [](const event &GenEvent) { return GenEvent.get_neutrino(); },
                 {"GenEvent"})
