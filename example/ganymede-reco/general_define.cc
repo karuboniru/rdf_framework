@@ -84,6 +84,10 @@ class ANALYSIS : public ProcessNodeI {
                   return GenEvent.count_particle_out(2112);
                 },
                 {"GenEvent"})
+        .Define("n_neutron_d",
+                [](size_t n_neutron) { return static_cast<double>(n_neutron); },
+                {"n_neutron"}) // just for the sake of histogramming
+                               // (RDF::Histo1D wants double)
         .Define("is_qel",
                 [](const event &GenEvent) {
                   return GenEvent.get_interaction() == interaction_channel::qel;
