@@ -177,13 +177,15 @@ auto analysis_entry_handle(ROOT::RDF::RNode preprocessed_node,
   return ret;
 }
 
-void plugin_handle(ROOT::RDF::RNode rootnode, nlohmann::json &entry) {
+void plugin_handle(TChain &ch, nlohmann::json &entry) {
+  std::string so_name = entry["plugin"];
+  dlopen_wrap so(so_name);
+  // auto rootnode = ROOT::RDF::AsRNode(ROOT::RDataFrame(ch));
+  ROOT::RDataFrame rootnode(ch);
   std::cout << "Processing " << entry["name"] << std::endl;
 #if ROOT_VERSION_CODE >= ROOT_VERSION(6, 30, 0)
   ROOT::RDF::Experimental::AddProgressBar(rootnode);
 #endif
-  std::string so_name = entry["plugin"];
-  dlopen_wrap so(so_name);
 
   std::unique_ptr<ProcessNodeI> preprocess =
       entry.find("preprocess") != entry.end()
@@ -216,7 +218,7 @@ void plugin_handle(ROOT::RDF::RNode rootnode, nlohmann::json &entry) {
   }
 
   // event loop should be triggered here if normalize_func is defined
-  auto normalize_factor = normalize_func ? (*normalize_func)(rootnode) : 1.;
+  auto normalize_factor = normalize_func ? (*normalize_func)(preprocessed_node) : 1.;
   if (normalize_factor != 1.) {
     for (auto &&[_, hist1ds, stacks, __] : analysis_result_handles) {
       for (auto &&hist : hist1ds) {
@@ -232,19 +234,22 @@ void plugin_handle(ROOT::RDF::RNode rootnode, nlohmann::json &entry) {
 
   for (auto &&[filename, hist1ds, stacks, snapshot_action] :
        analysis_result_handles) {
-    std::cerr << "Writing to " << filename << std::endl;
-    auto file = std::make_unique<TFile>(filename.c_str(), "RECREATE");
-    file->cd();
-    for (auto &&hist : hist1ds) {
-      hist->Write();
-    }
-    for (auto &&[hs, hists] : stacks) {
-      for (auto &&hist : hists) {
-        hs.Add(hist.GetPtr());
+    snapshot_action.GetPtr();
+    if (!hist1ds.empty() || !stacks.empty()) {
+      std::cerr << "Writing to " << filename << std::endl;
+      auto file = std::make_unique<TFile>(filename.c_str(), "RECREATE");
+      file->cd();
+      for (auto &&hist : hist1ds) {
+        hist->Write();
       }
-      hs.Write();
+      for (auto &&[hs, hists] : stacks) {
+        for (auto &&hist : hists) {
+          hs.Add(hist.GetPtr());
+        }
+        hs.Write();
+      }
+      file->Write();
+      file->Close();
     }
-    file->Write();
-    file->Close();
   }
 }

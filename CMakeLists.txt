@@ -6,6 +6,7 @@ if(NOT nlohmann_json_FOUND)
     FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.2/json.tar.xz)
     FetchContent_MakeAvailable(json)
 endif()
+set(CMAKE_CXX_STANDARD 20)
 
 find_package(ROOT REQUIRED)
 find_package(Boost)
@@ -13,14 +14,15 @@ include_directories(
     ${ROOT_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -O3 -g3 -ggdb -march=native -Wall -Wextra -Wpedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -O3 -g3 -ggdb -Wall -Wextra -Wpedantic")
 add_subdirectory(example)
 
 file(GLOB SOURCES "src/*.cxx")
+add_library(nuanalysis SHARED ${SOURCES})
 
-add_executable(main main.cxx ${SOURCES})
-set_property(TARGET main PROPERTY ENABLE_EXPORTS ON)
-target_link_libraries(main ROOT::ROOTDataFrame nlohmann_json::nlohmann_json ${CMAKE_DL_LIBS})
+add_executable(main main.cxx)
+# set_property(TARGET main PROPERTY ENABLE_EXPORTS ON)
+target_link_libraries(main nuanalysis ROOT::ROOTDataFrame nlohmann_json::nlohmann_json ${CMAKE_DL_LIBS})
 install(TARGETS main DESTINATION bin)
 
 if(Boost_FOUND)
@@ -30,6 +32,6 @@ if(Boost_FOUND)
 endif()
 
 add_executable(merge_plot merge_plot.cxx)
-target_link_libraries(merge_plot ROOT::Tree  ROOT::Hist ROOT::Gpad nlohmann_json::nlohmann_json ${CMAKE_DL_LIBS})
+target_link_libraries(merge_plot ROOT::Tree ROOT::Hist ROOT::Gpad nlohmann_json::nlohmann_json ${CMAKE_DL_LIBS})
 install(TARGETS merge_plot DESTINATION bin)
 

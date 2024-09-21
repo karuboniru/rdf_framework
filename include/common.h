@@ -40,18 +40,24 @@ public:
     return true;
   }
 
+  void unregisterCreator(const std::string &name) { creator.erase(name); }
+
   static FactoryT<T> &instance() {
     static FactoryT<T> instance;
     return instance;
   }
+
+  FactoryT(const FactoryT &) = delete;
+  FactoryT(FactoryT &&) = delete;
+  FactoryT &operator=(const FactoryT &) = delete;
+  FactoryT &operator=(FactoryT &&) = delete;
+  ~FactoryT() = default;
 
 private:
   std::unordered_map<std::string,
                      std::function<std::unique_ptr<ProcessNodeT<T>>()>>
       creator;
   FactoryT() = default;
-  FactoryT(const FactoryT &) = delete;
-  FactoryT(FactoryT &&) = delete;
 };
 
 using ProcessNodeI = ProcessNodeT<ROOT::RDF::RNode>;
@@ -59,21 +65,31 @@ using ProcessNodeFactory = FactoryT<ROOT::RDF::RNode>;
 using NormalizeI = ProcessNodeT<double>;
 using NormalizeFactory = FactoryT<double>;
 
+template <typename TFactory, typename Handler> class RegistrationGuard {
+public:
+  RegistrationGuard(const std::string &name) : name(name) {
+    TFactory::instance().registerCreator(
+        name, []() { return std::make_unique<Handler>(); });
+  }
+  ~RegistrationGuard() { TFactory::instance().unregisterCreator(name); }
+
+  RegistrationGuard(const RegistrationGuard &) = delete;
+  RegistrationGuard(RegistrationGuard &&) = delete;
+  RegistrationGuard &operator=(const RegistrationGuard &) = delete;
+  RegistrationGuard &operator=(RegistrationGuard &&) = delete;
+
+private:
+  std::string name;
+};
+
 #define REGISTER_PROCESS_NODE(type)                                            \
   namespace {                                                                  \
-  static bool type##registered =                                               \
-      ProcessNodeFactory::instance().registerCreator(                          \
-          #type, []() -> std::unique_ptr<ProcessNodeI> {                       \
-            return std::make_unique<type>();                                   \
-          });                                                                  \
+  static RegistrationGuard<ProcessNodeFactory, type> type##registered{#type};  \
   }
 
 #define REGISTER_NORMALIZE(type)                                               \
   namespace {                                                                  \
-  static bool type##registered = NormalizeFactory::instance().registerCreator( \
-      #type, []() -> std::unique_ptr<NormalizeI> {                             \
-        return std::make_unique<type>();                                       \
-      });                                                                      \
+  static RegistrationGuard<NormalizeFactory, type> type##registered{#type};    \
   }
 
 #endif

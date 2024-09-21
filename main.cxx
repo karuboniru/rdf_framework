@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
   if (plugins_entry.is_array()) {
     for (auto &&p : plugins_entry) {
       try {
-        plugin_handle(rootnode, p);
+        plugin_handle(*filechain, p);
       } catch (std::exception &e) {
         std::cerr << "Failed to run plugin: " << p["name"].get<std::string>()
                   << "\n\t" << e.what() << "\n\t"
@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
     }
   } else {
     try {
-      plugin_handle(rootnode, plugins_entry);
+      plugin_handle(*filechain, plugins_entry);
     } catch (std::exception &e) {
       std::cerr << "Failed to run plugin: "
                 << plugins_entry["name"].get<std::string>() << "\n\t"

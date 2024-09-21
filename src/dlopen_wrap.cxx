@@ -1,7 +1,8 @@
 #include "dlopen_wrap.h"
 #include <iostream>
 
-dlopen_wrap::dlopen_wrap(const std::string& filename, int flag) : handle(dlopen(filename.c_str(), flag)) {
+dlopen_wrap::dlopen_wrap(const std::string &filename, int flag)
+    : handle(dlopen(filename.c_str(), flag)) {
   if (!handle) {
     std::cerr << "Cannot open library: " << dlerror() << '\n';
     throw std::runtime_error("Cannot open library");
@@ -21,7 +22,7 @@ void *dlopen_wrap::get_symbol(const char *symbol) {
   return dlsym(handle, symbol);
 }
 
-dlopen_wrap::dlopen_wrap(dlopen_wrap &&other)  noexcept : handle(other.handle) {
+dlopen_wrap::dlopen_wrap(dlopen_wrap &&other) noexcept : handle(other.handle) {
   other.handle = nullptr;
 }
 
