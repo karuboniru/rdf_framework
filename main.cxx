@@ -32,8 +32,9 @@ int main(int argc, char **argv) {
       }
     }
   }
-
-  ROOT::EnableImplicitMT(guess_nproc_from_env());
+  auto nproc = guess_nproc_from_env();
+  std::cout << "Using " << nproc << " threads" << std::endl;
+  ROOT::EnableImplicitMT(nproc);
 
   nlohmann::json j;
   {
