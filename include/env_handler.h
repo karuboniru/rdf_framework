@@ -16,4 +16,5 @@ private:
 };
 
 std::string operator|(const std::string_view lhs, env_handler &rhs);
-// std::basic_stre
+
+size_t guess_nproc_from_env();

@@ -1,4 +1,5 @@
 #include "env_handler.h"
+#include <array>
 
 env_handler &env_handler::get_instance() {
   static env_handler instance;
@@ -54,4 +55,19 @@ std::string operator|(const std::string_view lhs, env_handler &rhs) {
     }
   }
   return ret;
+}
+
+size_t guess_nproc_from_env() {
+  constexpr auto keys =
+      std::to_array({"NPROC", "OMP_NUM_THREADS", "GSL_NUM_THREADS",
+                     "MKL_NUM_THREADS", "JULIA_NUM_THREADS", "TF_NUM_THREADS",
+                     "GOMAXPROCS", "SLURM_NTASKS", "SLURM_NPROCS"});
+  for (auto &&key : keys) {
+    auto value = env_handler::get_instance().get_env(key);
+    if (!value.empty()) {
+      return std::stoul(value);
+    }
+  }
+  // 0 means let ROOT decide
+  return 0;
 }

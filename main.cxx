@@ -17,7 +17,6 @@
 
 int main(int argc, char **argv) {
   TH1::AddDirectory(false);
-  ROOT::EnableImplicitMT();
   if (argc < 2) {
     std::cout << "Usage: " << argv[0] << " <json_file>" << std::endl;
     return 1;
@@ -33,6 +32,8 @@ int main(int argc, char **argv) {
       }
     }
   }
+
+  ROOT::EnableImplicitMT(guess_nproc_from_env());
 
   nlohmann::json j;
   {
