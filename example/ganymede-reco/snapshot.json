@@ -1,0 +1,40 @@
+{
+  "files": [
+    "/var/home/yan/neutrino/gentest/small.gtrac.root"
+  ],
+  "treename": "gRooTracker",
+  "plugins": [
+    {
+      "name": "GENIE",
+      "plugin": "/var/home/yan/code/rdf_framework_juno/build/example/ganymede-reco/libgenerator_event.so",
+      "preprocess": "GENIE2Event",
+      "analysis": [
+        {
+          "treename": "treeout",
+          "filename": "snapshot.root",
+          "plot_file": "plot.root",
+          "func": "ANALYSIS",
+          "output": [
+            "Q2",
+            "W",
+            "cc_flag",
+            "y",
+            "xBj",
+            "xBj_rest",
+            "W_rest",
+            "npi0",
+            "npi_charged",
+            "n_neutron",
+            "n_neutron_d",
+            "Enu",
+            "q0",
+            "EvtCode",
+            "neutrino_id",
+            "nucleus_id",
+            "neutrinoE"
+          ]
+        }
+      ]
+    }
+  ]
+}

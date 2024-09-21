@@ -66,7 +66,16 @@ class GENIE2Event : public ProcessNodeI {
         //     },
         //     {"GenEvent"})
         .Define("cc_flag", [](const event &e) { return e.get_is_cc(); },
-                {"GenEvent"});
+                {"GenEvent"})
+        .Define("neutrinoE",
+                [](const ROOT::RVec<double> &StdHepP4) { return StdHepP4[3]; },
+                {"StdHepP4"})
+        .Define("neutrino_id",
+                [](const ROOT::RVec<int> &StdHepPdg) { return StdHepPdg[0]; },
+                {"StdHepPdg"})
+        .Define("nucleus_id",
+                [](const ROOT::RVec<int> &StdHepPdg) { return StdHepPdg[1]; },
+                {"StdHepPdg"});
   };
 
   void configure(const nlohmann::json &) override {};
@@ -132,16 +141,21 @@ public:
         },
         {"EvtCode"});
     auto get_hist_neutrinoE_cc = [&](int neutrino, int nucleus) {
+      // try {
+      //   dfcc = dfcc.Define(
+      //       "neutrinoE",
+      //       [](const ROOT::RVec<double> &StdHepP4) { return StdHepP4[3]; },
+      //       {"StdHepP4"});
+      // } catch (...) {
+      //   std::cout << "Failed to define neutrinoE \n"
+      //             << "  maybe processing a snapshot, ignoring...\n";
+      // }
       return dfcc
           .Filter(
-              [=](const ROOT::RVec<int> &StdHepPdg) {
-                return StdHepPdg[0] == neutrino && StdHepPdg[1] == nucleus;
+              [=](const int neutrino_id, const int nucleus_id) {
+                return neutrino_id == neutrino && nucleus_id == nucleus;
               },
-              {"StdHepPdg"})
-          .Define(
-              "neutrinoE",
-              [](const ROOT::RVec<double> &StdHepP4) { return StdHepP4[3]; },
-              {"StdHepP4"})
+              {"neutrino_id", "nucleus_id"})
           .Histo1D(h_model, "neutrinoE");
     };
     auto h_nu_mu_C12 = get_hist_neutrinoE_cc(14, 1000060120);
@@ -164,7 +178,7 @@ public:
         get_fuxint(h_nu_e_bar_C12.GetPtr(), nu_e_bar_C12) * 12 +
         get_fuxint(h_nu_e_H1.GetPtr(), nu_e_H1) +
         get_fuxint(h_nu_e_bar_H1.GetPtr(), nu_e_bar_H1);
-        
+
     auto xsec_per_nucleon = event_count / total_fluxint;
     // per nucleus to per nucleon
     auto res = xsec_per_nucleon;
