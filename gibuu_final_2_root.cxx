@@ -25,6 +25,7 @@ private:
       datamap[{gibuu, charge}] = pdg;
       if (charge != 0)
         datamap[{gibuu, -charge}] = -pdg;
+      datamap[{-gibuu, -charge}] = -pdg;
     }
   }
 
@@ -37,7 +38,12 @@ public:
 };
 
 auto get_pdg(int gibuu, int charge) {
-  return gibuu_to_pdg::get_instance().get_pdg(gibuu, charge);
+  auto res = gibuu_to_pdg::get_instance().get_pdg(gibuu, charge);
+  if (res == 0) {
+    std::cout << "Error: no PDG code for gibuu=" << gibuu
+              << " charge=" << charge << std::endl;
+  }
+  return res;
 }
 
 class event {
@@ -113,8 +119,10 @@ public:
 
 int main(int argc, char **argv) {
   if (argc < 3) {
-    std::cout << "Usage: " << argv[0] << "<map_file> <input_file> <output_file> [neutrino id (default 14)]"
-              << std::endl;
+    std::cout
+        << "Usage: " << argv[0]
+        << "<map_file> <input_file> <output_file> [neutrino id (default 14)]"
+        << std::endl;
     return 1;
   }
   std::string map_file = argv[1];
