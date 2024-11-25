@@ -134,7 +134,8 @@ public:
                     hittime_ref == 0 ? INFINITY : hittime_ref, elec.hitTime());
                 npe_c[elec.pmtId()] += elec.npe();
                 amplitude_c[elec.pmtId()] =
-                    std::max(amplitude_c[elec.pmtId()], elec.amplitude());
+                    std::max((double)amplitude_c[elec.pmtId()],
+                             (double)elec.amplitude());
               }
               for (auto &&pmtid : pmtid_c) {
                 npe.push_back(npe_c[pmtid]);
