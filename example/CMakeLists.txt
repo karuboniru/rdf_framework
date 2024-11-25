@@ -15,7 +15,7 @@ add_library(genie_general OBJECT genie_general.cxx)
 
 add_subdirectory(TKI)
 add_subdirectory(GENIESingle)
-if(DEFINED ENV{JUNOSYS})
+if(DEFINED ENV{JUNOTOP})
   add_subdirectory(JunoEDM)
 endif()
 if(DEFINED ENV{NUWRO})
