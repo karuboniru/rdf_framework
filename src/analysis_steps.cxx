@@ -179,6 +179,7 @@ auto analysis_entry_handle(ROOT::RDF::RNode preprocessed_node,
 
 void plugin_handle(TChain &ch, nlohmann::json &entry) {
   std::string so_name = entry["plugin"];
+  auto skip_empty = entry.value("skip_empty", true);
   dlopen_wrap so(so_name);
   // auto rootnode = ROOT::RDF::AsRNode(ROOT::RDataFrame(ch));
   ROOT::RDataFrame rootnode(ch);
@@ -218,7 +219,8 @@ void plugin_handle(TChain &ch, nlohmann::json &entry) {
   }
 
   // event loop should be triggered here if normalize_func is defined
-  auto normalize_factor = normalize_func ? (*normalize_func)(preprocessed_node) : 1.;
+  auto normalize_factor =
+      normalize_func ? (*normalize_func)(preprocessed_node) : 1.;
   if (normalize_factor != 1.) {
     for (auto &&[_, hist1ds, stacks, __] : analysis_result_handles) {
       for (auto &&hist : hist1ds) {
@@ -240,10 +242,14 @@ void plugin_handle(TChain &ch, nlohmann::json &entry) {
       auto file = std::make_unique<TFile>(filename.c_str(), "RECREATE");
       file->cd();
       for (auto &&hist : hist1ds) {
+        if (skip_empty && hist->GetEntries() == 0)
+          continue;
         hist->Write();
       }
       for (auto &&[hs, hists] : stacks) {
         for (auto &&hist : hists) {
+          if (skip_empty && hist->GetEntries() == 0)
+            continue;
           hs.Add(hist.GetPtr());
         }
         hs.Write();
