@@ -82,6 +82,12 @@ class GENIE2Event : public ProcessNodeI {
 };
 
 double get_fuxint(TH1 *h_rate, TGraph *spline) {
+  if (!h_rate || !spline) {
+    return 0;
+  }
+  if (h_rate->GetEntries() == 0) {
+    return 0;
+  }
   double fluxint{};
   // spline->SaveAs("wrong.root");
   TSpline3 sp("sp", spline);
