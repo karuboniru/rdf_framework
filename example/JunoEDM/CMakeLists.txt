@@ -1,6 +1,6 @@
 find_package(junosw)
 if (junosw_FOUND)
-    add_library(SimHeadTest SHARED SimHead.cxx)
+    add_library(SimHeadTest MODULE SimHead.cxx)
     target_link_libraries(SimHeadTest 
                             junosw::EDMUtil 
                             junosw::EvtNavigator 
@@ -8,7 +8,7 @@ if (junosw_FOUND)
                             junosw::SimEvent
                           )
 
-    add_library(elec2hit SHARED elec2hit.cxx)
+    add_library(elec2hit MODULE elec2hit.cxx)
     target_link_libraries(elec2hit 
                             junosw::EDMUtil 
                             junosw::EvtNavigator 
