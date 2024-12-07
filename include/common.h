@@ -84,12 +84,14 @@ private:
 
 #define REGISTER_PROCESS_NODE(type)                                            \
   namespace {                                                                  \
-  static RegistrationGuard<ProcessNodeFactory, type> type##registered{#type};  \
+  const static RegistrationGuard<ProcessNodeFactory, type> type##registered{   \
+      #type};                                                                  \
   }
 
 #define REGISTER_NORMALIZE(type)                                               \
   namespace {                                                                  \
-  static RegistrationGuard<NormalizeFactory, type> type##registered{#type};    \
+  const static RegistrationGuard<NormalizeFactory, type> type##registered{     \
+      #type};                                                                  \
   }
 
 #endif

@@ -111,8 +111,16 @@ class NuWro2Event : public ProcessNodeI {
         //     },
         //     {"GenEvent"})
         .Define("cc_flag", [](const event &e) { return e.get_is_cc(); },
-                {"GenEvent"});
-    ;
+                {"GenEvent"})
+        .Define("neutrinoE",
+                [](const ROOT::RVec<double> &StdHepP4) { return StdHepP4[3]; },
+                {"StdHepP4"})
+        .Define("neutrino_id",
+                [](const ROOT::RVec<int> &StdHepPdg) { return StdHepPdg[0]; },
+                {"StdHepPdg"})
+        .Define("nucleus_id",
+                [](const ROOT::RVec<int> &StdHepPdg) { return StdHepPdg[1]; },
+                {"StdHepPdg"});
   }
 
   void configure(const nlohmann::json &) override {};
