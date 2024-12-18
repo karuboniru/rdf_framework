@@ -99,3 +99,14 @@ class ANALYSIS : public ProcessNodeI {
 };
 
 REGISTER_PROCESS_NODE(ANALYSIS)
+
+class shape_only : public NormalizeI {
+public:
+  double operator()(ROOT::RDF::RNode df) override {
+    auto num = df.Count();
+    return 1. / num.GetValue();
+  }
+  void configure(const nlohmann::json &) override {};
+};
+
+REGISTER_NORMALIZE(shape_only)
