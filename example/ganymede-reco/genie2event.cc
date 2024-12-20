@@ -128,27 +128,27 @@ public:
   double operator()(ROOT::RDF::RNode df) override {
     TFile root_file{filename.c_str(), "READ"};
     auto nu_mu_C12 =
-        static_cast<TGraph *>(root_file.Get("nu_mu_C12/tot_cc")->Clone());
+        static_cast<TGraph *>(root_file.Get("nu_mu_C12/tot_nc")->Clone());
     auto nu_mu_bar_C12 =
-        static_cast<TGraph *>(root_file.Get("nu_mu_bar_C12/tot_cc")->Clone());
+        static_cast<TGraph *>(root_file.Get("nu_mu_bar_C12/tot_nc")->Clone());
     auto nu_mu_H1 =
-        static_cast<TGraph *>(root_file.Get("nu_mu_H1/tot_cc")->Clone());
+        static_cast<TGraph *>(root_file.Get("nu_mu_H1/tot_nc")->Clone());
     auto nu_mu_bar_H1 =
-        static_cast<TGraph *>(root_file.Get("nu_mu_bar_H1/tot_cc")->Clone());
+        static_cast<TGraph *>(root_file.Get("nu_mu_bar_H1/tot_nc")->Clone());
 
     auto nu_e_C12 =
-        static_cast<TGraph *>(root_file.Get("nu_e_C12/tot_cc")->Clone());
+        static_cast<TGraph *>(root_file.Get("nu_e_C12/tot_nc")->Clone());
     auto nu_e_bar_C12 =
-        static_cast<TGraph *>(root_file.Get("nu_e_bar_C12/tot_cc")->Clone());
+        static_cast<TGraph *>(root_file.Get("nu_e_bar_C12/tot_nc")->Clone());
     auto nu_e_H1 =
-        static_cast<TGraph *>(root_file.Get("nu_e_H1/tot_cc")->Clone());
+        static_cast<TGraph *>(root_file.Get("nu_e_H1/tot_nc")->Clone());
     auto nu_e_bar_H1 =
-        static_cast<TGraph *>(root_file.Get("nu_e_bar_H1/tot_cc")->Clone());
+        static_cast<TGraph *>(root_file.Get("nu_e_bar_H1/tot_nc")->Clone());
 
     ROOT::RDF::TH1DModel h_model{"", "", 500, 0, 20.};
     auto dfcc = df.Filter(
         [](const TObjString &EvtCode) {
-          return EvtCode.GetString().Contains("CC");
+          return EvtCode.GetString().Contains("Weak[NC]");
         },
         {"EvtCode"});
     auto get_hist_neutrinoE_cc = [&](int neutrino) {
