@@ -140,22 +140,13 @@ public:
     auto nu_e_bar_H1 =
         static_cast<TGraph *>(root_file.Get("nu_e_bar_H1/tot_cc")->Clone());
 
-    ROOT::RDF::TH1DModel h_model{"", "", 20, 0, 20.};
+    ROOT::RDF::TH1DModel h_model{"", "", 500, 0, 20.};
     auto dfcc = df.Filter(
         [](const TObjString &EvtCode) {
           return EvtCode.GetString().Contains("CC");
         },
         {"EvtCode"});
     auto get_hist_neutrinoE_cc = [&](int neutrino, int nucleus) {
-      // try {
-      //   dfcc = dfcc.Define(
-      //       "neutrinoE",
-      //       [](const ROOT::RVec<double> &StdHepP4) { return StdHepP4[3]; },
-      //       {"StdHepP4"});
-      // } catch (...) {
-      //   std::cout << "Failed to define neutrinoE \n"
-      //             << "  maybe processing a snapshot, ignoring...\n";
-      // }
       return dfcc
           .Filter(
               [=](const int neutrino_id, const int nucleus_id) {
