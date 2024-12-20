@@ -81,8 +81,9 @@ class GENIE2Event : public ProcessNodeI {
   void configure(const nlohmann::json &) override {};
 };
 
-double get_fuxint(TH1 *h_rate, TGraph *spline) {
-  if (!h_rate || !spline) {
+double get_fuxint(TH1 *h_rate, TGraph *C_spline, TGraph *H_spline,
+                  double ratioC, double ratioH) {
+  if (!h_rate || !C_spline || !H_spline) {
     return 0;
   }
   if (h_rate->GetEntries() == 0) {
@@ -90,10 +91,14 @@ double get_fuxint(TH1 *h_rate, TGraph *spline) {
   }
   double fluxint{};
   // spline->SaveAs("wrong.root");
-  TSpline3 sp("sp", spline);
+  TSpline3 spC("spC", C_spline);
+  TSpline3 spH("spH", H_spline);
   TF1 func(
-      "spline", [&](double *x, double *) { return sp.Eval(*x); }, 0,
-      h_rate->GetXaxis()->GetXmax(), 0);
+      "spline",
+      [&](double *x, double *) {
+        return (spC.Eval(x[0]) * ratioC) + (spH.Eval(x[0]) * ratioH);
+      },
+      0, h_rate->GetXaxis()->GetXmax(), 0);
   for (int ii = 1; ii <= h_rate->GetNbinsX(); ii++) {
     double bin_c = h_rate->GetBinContent(ii);
     double bin_up = h_rate->GetXaxis()->GetBinUpEdge(ii);
@@ -146,35 +151,35 @@ public:
           return EvtCode.GetString().Contains("CC");
         },
         {"EvtCode"});
-    auto get_hist_neutrinoE_cc = [&](int neutrino, int nucleus) {
+    auto get_hist_neutrinoE_cc = [&](int neutrino) {
       return dfcc
           .Filter(
-              [=](const int neutrino_id, const int nucleus_id) {
-                return neutrino_id == neutrino && nucleus_id == nucleus;
-              },
-              {"neutrino_id", "nucleus_id"})
+              [=](const int neutrino_id) { return neutrino_id == neutrino; },
+              {"neutrino_id"})
           .Histo1D(h_model, "neutrinoE");
     };
-    auto h_nu_mu_C12 = get_hist_neutrinoE_cc(14, 1000060120);
-    auto h_nu_mu_bar_C12 = get_hist_neutrinoE_cc(-14, 1000060120);
-    auto h_nu_mu_H1 = get_hist_neutrinoE_cc(14, 2212);
-    auto h_nu_mu_bar_H1 = get_hist_neutrinoE_cc(-14, 2212);
-
-    auto h_nu_e_C12 = get_hist_neutrinoE_cc(12, 1000060120);
-    auto h_nu_e_bar_C12 = get_hist_neutrinoE_cc(-12, 1000060120);
-    auto h_nu_e_H1 = get_hist_neutrinoE_cc(12, 2212);
-    auto h_nu_e_bar_H1 = get_hist_neutrinoE_cc(-12, 2212);
+    auto h_nu_mu = get_hist_neutrinoE_cc(14);
+    auto h_nu_mu_bar = get_hist_neutrinoE_cc(-14);
+    auto h_nu_e = get_hist_neutrinoE_cc(12);
+    auto h_nu_e_bar = get_hist_neutrinoE_cc(-12);
 
     auto event_count = dfcc.Count().GetValue();
     auto total_fluxint =
-        get_fuxint(h_nu_mu_C12.GetPtr(), nu_mu_C12) * 12 +
-        get_fuxint(h_nu_mu_bar_C12.GetPtr(), nu_mu_bar_C12) * 12 +
-        get_fuxint(h_nu_mu_H1.GetPtr(), nu_mu_H1) +
-        get_fuxint(h_nu_mu_bar_H1.GetPtr(), nu_mu_bar_H1) +
-        get_fuxint(h_nu_e_C12.GetPtr(), nu_e_C12) * 12 +
-        get_fuxint(h_nu_e_bar_C12.GetPtr(), nu_e_bar_C12) * 12 +
-        get_fuxint(h_nu_e_H1.GetPtr(), nu_e_H1) +
-        get_fuxint(h_nu_e_bar_H1.GetPtr(), nu_e_bar_H1);
+        get_fuxint(h_nu_mu.GetPtr(), nu_mu_C12, nu_mu_H1, ratio_C, ratio_H) +
+        get_fuxint(h_nu_mu_bar.GetPtr(), nu_mu_bar_C12, nu_mu_bar_H1, ratio_C,
+                   ratio_H) +
+        get_fuxint(h_nu_e.GetPtr(), nu_e_C12, nu_e_H1, ratio_C, ratio_H) +
+        get_fuxint(h_nu_e_bar.GetPtr(), nu_e_bar_C12, nu_e_bar_H1, ratio_C,
+                   ratio_H);
+    // auto total_fluxint =
+    //     get_fuxint(h_nu_mu_C12.GetPtr(), nu_mu_C12) * 12 +
+    //     get_fuxint(h_nu_mu_bar_C12.GetPtr(), nu_mu_bar_C12) * 12 +
+    //     get_fuxint(h_nu_mu_H1.GetPtr(), nu_mu_H1) +
+    //     get_fuxint(h_nu_mu_bar_H1.GetPtr(), nu_mu_bar_H1) +
+    //     get_fuxint(h_nu_e_C12.GetPtr(), nu_e_C12) * 12 +
+    //     get_fuxint(h_nu_e_bar_C12.GetPtr(), nu_e_bar_C12) * 12 +
+    //     get_fuxint(h_nu_e_H1.GetPtr(), nu_e_H1) +
+    //     get_fuxint(h_nu_e_bar_H1.GetPtr(), nu_e_bar_H1);
 
     auto xsec_per_nucleon = event_count / total_fluxint;
     // per nucleus to per nucleon
@@ -187,10 +192,14 @@ public:
 
   void configure(const nlohmann::json &conf) override {
     filename = conf["filename"];
+    ratio_C = conf["ratio_C"];
+    ratio_H = conf["ratio_H"];
   }
 
 private:
   std::string filename;
+  double ratio_C{};
+  double ratio_H{};
 };
 
 REGISTER_PROCESS_NODE(GENIE2Event)
