@@ -34,4 +34,3 @@ endif()
 add_executable(merge_plot merge_plot.cxx)
 target_link_libraries(merge_plot ROOT::Tree ROOT::Hist ROOT::Gpad nlohmann_json::nlohmann_json ${CMAKE_DL_LIBS})
 install(TARGETS merge_plot DESTINATION bin)
-

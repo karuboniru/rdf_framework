@@ -122,7 +122,7 @@ axis_non_uniform get_axis(axis &ax) {
       ax);
 }
 
-ROOT::RDF::RResultPtr<TH1> draw_hists_nd(ROOT::RDF::RNode rawnode,
+general_hist_result_t draw_hists_nd(ROOT::RDF::RNode rawnode,
                                          std::string name,
                                          std::vector<axis> axes,
                                          nlohmann::json &cut,

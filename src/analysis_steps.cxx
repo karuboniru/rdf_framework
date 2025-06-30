@@ -1,16 +1,20 @@
 #include "analysis_steps.h"
+#include "ROOT/RDF/RResultMap.hxx"
 #include "THStack.h"
 #include "dlopen_wrap.h"
 #include "get_callable.h"
 #include "hist_draw.h"
 #include "wildcard_expand.h"
 #include <ROOT/RDF/InterfaceUtils.hxx>
+#include <ROOT/RDFHelpers.hxx>
+#include <ROOT/RDataFrame.hxx>
 #include <TChain.h>
 #include <dlfcn.h>
 #include <memory>
 // #include <optional>
-// #include <ranges>
+#include <ranges>
 #include <tuple>
+#include <variant>
 // #include <unordered_map>
 
 std::tuple<std::unique_ptr<TChain>, std::vector<std::unique_ptr<TChain>>>
@@ -92,7 +96,7 @@ auto analysis_entry_handle(ROOT::RDF::RNode preprocessed_node,
     throw std::runtime_error("Failed to get analysis function");
   auto result_node = (*func)(preprocessed_node);
   std::tuple<
-      std::string, std::vector<ROOT::RDF::RResultPtr<TH1>>,
+      std::string, std::vector<general_hist_result_t>,
       std::vector<std::pair<THStack, std::vector<ROOT::RDF::RResultPtr<TH1D>>>>,
       // std::vector<ROOT::RDF::RResultPtr<TH2D>>,
       ROOT::RDF::RResultPtr<
@@ -177,6 +181,21 @@ auto analysis_entry_handle(ROOT::RDF::RNode preprocessed_node,
   return ret;
 }
 
+ROOT::RDF::RNode add_variation(ROOT::RDF::RNode df_in,
+                               nlohmann::json &configuration) {
+  return df_in.Define("__weight", []() { return 1.; })
+      .Vary(
+          "__weight",
+          [](const TArrayD &weights) {
+            ROOT::RVecD ret{};
+            for (int i = 0; i < weights.GetSize(); ++i) {
+              ret.push_back(weights[i]);
+            }
+            return ret;
+          },
+          {configuration["weight"]}, configuration["count"].get<int>());
+}
+
 void plugin_handle(TChain &ch, nlohmann::json &entry) {
   std::string so_name = entry["plugin"];
   auto skip_empty = entry.value("skip_empty", true);
@@ -195,7 +214,20 @@ void plugin_handle(TChain &ch, nlohmann::json &entry) {
   if (!preprocess)
     throw std::runtime_error("Failed to get preprocess function");
 
-  auto preprocessed_node = (*preprocess)(rootnode);
+  auto variation_iter = entry.find("variation");
+  auto with_variation = variation_iter != entry.end();
+
+  auto preprocessed_node = (*preprocess)(
+      with_variation ? add_variation(rootnode, *variation_iter) : rootnode);
+
+  if (with_variation) {
+    // modify plot configuration that the weight is applied
+    for (auto &analysis_obj : entry["analysis"]) {
+      for (auto &plot_obj : analysis_obj["plots"]) {
+        plot_obj["wname"] = "__weight";
+      }
+    }
+  }
 
   // double norm_factor{};
   std::unique_ptr<NormalizeI> normalize_func{};
@@ -207,7 +239,7 @@ void plugin_handle(TChain &ch, nlohmann::json &entry) {
   }
 
   std::vector<std::tuple<
-      std::string, std::vector<ROOT::RDF::RResultPtr<TH1>>,
+      std::string, std::vector<general_hist_result_t>,
       std::vector<std::pair<THStack, std::vector<ROOT::RDF::RResultPtr<TH1D>>>>,
       // std::vector<ROOT::RDF::RResultPtr<TH2D>>,
       ROOT::RDF::RResultPtr<
@@ -219,43 +251,98 @@ void plugin_handle(TChain &ch, nlohmann::json &entry) {
   }
 
   // event loop should be triggered here if normalize_func is defined
-  auto normalize_factor =
-      normalize_func ? (*normalize_func)(preprocessed_node) : 1.;
-  if (normalize_factor != 1.) {
-    for (auto &&[_, hist1ds, stacks, __] : analysis_result_handles) {
-      for (auto &&hist : hist1ds) {
-        hist->Scale(normalize_factor, "WIDTH");
-      }
-      for (auto &&[_, hists] : stacks) {
-        for (auto &&hist : hists) {
-          hist->Scale(normalize_factor, "WIDTH");
+  if (!with_variation) {
+    auto normalize_factor =
+        normalize_func ? (*normalize_func)(preprocessed_node) : 1.;
+    if (normalize_factor != 1.) {
+      for (auto &&[_, hist1ds, stacks, __] : analysis_result_handles) {
+        for (auto &&hist : hist1ds) {
+          std::visit(
+              [&](auto &&hist_) { hist_->Scale(normalize_factor, "WIDTH"); },
+              hist);
+        }
+        for (auto &&[_, hists] : stacks) {
+          for (auto &&hist : hists) {
+            hist->Scale(normalize_factor, "WIDTH");
+          }
         }
       }
     }
   }
 
-  for (auto &&[filename, hist1ds, stacks, snapshot_action] :
-       analysis_result_handles) {
-    snapshot_action.GetPtr();
-    if (!hist1ds.empty() || !stacks.empty()) {
-      std::cerr << "Writing to " << filename << std::endl;
+  if (!with_variation) {
+    for (auto &&[filename, hist1ds, stacks, snapshot_action] :
+         analysis_result_handles) {
+      snapshot_action.GetPtr();
+      if (!hist1ds.empty() || !stacks.empty()) {
+        std::cerr << "Writing to " << filename << std::endl;
+        auto file = std::make_unique<TFile>(filename.c_str(), "RECREATE");
+        file->cd();
+        for (auto &&hist : hist1ds) {
+          if (skip_empty &&
+              std::visit([&](auto &&hist_) { return hist_->GetEntries(); },
+                         hist) == 0)
+            continue;
+          std::visit([&](auto &&hist_) { hist_->Write(); }, hist);
+        }
+        for (auto &&[hs, hists] : stacks) {
+          for (auto &&hist : hists) {
+            if (skip_empty && hist->GetEntries() == 0)
+              continue;
+            hs.Add(hist.GetPtr());
+          }
+          hs.Write();
+        }
+        file->Write();
+        file->Close();
+      }
+    }
+  } else {
+    using general_var_result_t =
+        std::variant<ROOT::RDF::Experimental::RResultMap<TH1D>,
+                     ROOT::RDF::Experimental::RResultMap<TH2D>,
+                     ROOT::RDF::Experimental::RResultMap<TH3D>>;
+
+    for (auto &&[filename, hist1ds, variations] :
+         analysis_result_handles | std::views::transform([](auto &&tup) {
+           auto &&[filename, hist1ds, stacks, snapshot_action] = tup;
+           auto range_vars =
+               hist1ds | std::views::transform([](auto &&hist) {
+                 return std::visit(
+                     [](auto &&hist_) -> general_var_result_t {
+                       return ROOT::RDF::Experimental::VariationsFor(hist_);
+                     },
+                     hist);
+               });
+           std::vector<general_var_result_t> variations{};
+           for (auto &&var : range_vars) {
+             variations.emplace_back(var);
+           }
+           return std::make_tuple(filename, hist1ds, variations);
+         })) {
       auto file = std::make_unique<TFile>(filename.c_str(), "RECREATE");
       file->cd();
-      for (auto &&hist : hist1ds) {
-        if (skip_empty && hist->GetEntries() == 0)
-          continue;
-        hist->Write();
+      // Oh I want std::views::zip
+      for (size_t index{}; index < hist1ds.size(); index++) {
+        auto &hist = hist1ds[index];
+        // auto name = hist->GetName();
+        auto name =
+            std::visit([](auto &&hist_) { return hist_->GetName(); }, hist);
+        auto dir = file->mkdir(name);
+        dir->cd();
+        auto &variation = variations[index];
+        std::visit(
+            [&](auto variation_) {
+              for (auto &plots : variation_ | std::views::values) {
+                plots->Divide(std::visit(
+                    [](auto &&hist_) -> TH1 * { return hist_.GetPtr(); },
+                    hist));
+                plots->Write();
+              }
+            },
+            variation);
+        file->cd();
       }
-      for (auto &&[hs, hists] : stacks) {
-        for (auto &&hist : hists) {
-          if (skip_empty && hist->GetEntries() == 0)
-            continue;
-          hs.Add(hist.GetPtr());
-        }
-        hs.Write();
-      }
-      file->Write();
-      file->Close();
     }
   }
 }

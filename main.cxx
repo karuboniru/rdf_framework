@@ -48,8 +48,6 @@ int main(int argc, char **argv) {
   auto &&[filechain, friend_chains] = prepare_chain(j);
   ROOT::RDataFrame df(*filechain);
 
-  auto rootnode = ROOT::RDF::AsRNode(df);
-
   auto &&plugins_entry = j["plugins"];
   if (plugins_entry.is_array()) {
     for (auto &&p : plugins_entry) {

@@ -4,6 +4,9 @@
 #include <ROOT/RDataFrame.hxx>
 #include <nlohmann/json.hpp>
 #include <variant>
+using general_hist_result_t =
+    std::variant<ROOT::RDF::RResultPtr<TH1D>, ROOT::RDF::RResultPtr<TH2D>,
+                 ROOT::RDF::RResultPtr<TH3D>>;
 
 struct axis_uniform {
   std::string var;
@@ -36,10 +39,8 @@ draw_hists_3d(ROOT::RDF::RNode node, std::string name, axis_non_uniform x,
 
 ROOT::RDF::RNode do_cut(ROOT::RDF::RNode node, nlohmann::json &cut);
 
-ROOT::RDF::RResultPtr<TH1> draw_hists_nd(ROOT::RDF::RNode rawnode,
-                                         std::string name,
-                                         std::vector<axis> axes,
-                                         nlohmann::json &cut,
-                                         std::string_view wname);
+general_hist_result_t draw_hists_nd(ROOT::RDF::RNode rawnode, std::string name,
+                                    std::vector<axis> axes, nlohmann::json &cut,
+                                    std::string_view wname);
 
 axis_non_uniform get_axis(axis &ax);
