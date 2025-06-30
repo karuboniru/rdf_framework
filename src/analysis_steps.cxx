@@ -49,8 +49,8 @@ prepare_chain(nlohmann::json &j) {
 
   for (auto &friend_tree : j["friend_trees"]) {
     std::vector<std::string> file_paths_friend{};
-    if (j.find("files_friend") != j.end()) {
-      for (auto &file : j["files_friend"]) {
+    if (friend_tree.find("files_friend") != friend_tree.end()) {
+      for (auto &file : friend_tree["files_friend"]) {
         if (file.get<std::string>()[0] == '@') {
           std::ifstream file_list(file.get<std::string>().substr(1));
           std::string line;
@@ -60,7 +60,8 @@ prepare_chain(nlohmann::json &j) {
         } else {
           auto expanded_paths =
               ROOT::Internal::TreeUtils::ExpandGlob(file.get<std::string>());
-          file_paths_friend.insert(file_paths.end(), expanded_paths.begin(),
+          file_paths_friend.insert(file_paths_friend.end(),
+                                   expanded_paths.begin(),
                                    expanded_paths.end());
         }
       }
@@ -68,6 +69,10 @@ prepare_chain(nlohmann::json &j) {
         throw std::runtime_error("Number of files in 'files_friend' must match "
                                  "'files', quitting for safety.");
       }
+    } else {
+      std::cerr
+          << "No 'files_friend' specified, using 'files' for friend trees."
+          << std::endl;
     }
     auto &chain = friend_chains.emplace_back(std::make_unique<TChain>());
     for (auto &file :
@@ -206,7 +211,7 @@ auto analysis_entry_handle(ROOT::RDF::RNode preprocessed_node,
     }
   }
 
-  {
+  if (analysis_entry.contains("output")) {
     auto &&collist = analysis_entry["output"].get<std::vector<std::string>>();
     if (!collist.empty()) {
       ROOT::RDF::RSnapshotOptions opts;
@@ -310,6 +315,7 @@ void plugin_handle(TChain &ch, nlohmann::json &entry) {
   }
 
   if (!with_variation) {
+    std::cerr << "Normal plot mode" << std::endl;
     for (auto &&[filename, hist1ds, stacks, snapshot_action] :
          analysis_result_handles) {
       snapshot_action.GetPtr();
@@ -337,6 +343,7 @@ void plugin_handle(TChain &ch, nlohmann::json &entry) {
       }
     }
   } else {
+    std::cerr << "Variations plot mode" << std::endl;
     using general_var_result_t =
         std::variant<ROOT::RDF::Experimental::RResultMap<TH1D>,
                      ROOT::RDF::Experimental::RResultMap<TH2D>,
@@ -367,7 +374,7 @@ void plugin_handle(TChain &ch, nlohmann::json &entry) {
         // auto name = hist->GetName();
         auto name =
             std::visit([](auto &&hist_) { return hist_->GetName(); }, hist);
-        auto dir = file->mkdir(name);
+        auto dir = file->mkdir(Form("d_%s", name));
         dir->cd();
         auto &variation = variations[index];
         std::visit(
@@ -380,6 +387,7 @@ void plugin_handle(TChain &ch, nlohmann::json &entry) {
               }
             },
             variation);
+        dir->Write();
         file->cd();
       }
     }
