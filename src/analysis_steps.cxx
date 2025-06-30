@@ -22,10 +22,22 @@ prepare_chain(nlohmann::json &j) {
   std::tuple<std::unique_ptr<TChain>, std::vector<std::unique_ptr<TChain>>>
       ret{};
   std::vector<std::string> file_paths{};
+  // Process each file entry in the JSON configuration
   for (auto &file : j["files"]) {
-    auto expanded_paths = expand_wildcard_path(file.get<std::string>());
-    file_paths.insert(file_paths.end(), expanded_paths.begin(),
-                      expanded_paths.end());
+    // Check if the file entry starts with '@' indicating a file list
+    if (file[0] == '@') {
+      // Open the file list (removing the '@' prefix)
+      std::ifstream file_list(file.get<std::string>().substr(1));
+      std::string line;
+      while (std::getline(file_list, line)) {
+        file_paths.emplace_back(line);
+      }
+    } else {
+      // Handle wildcard paths by expanding them to actual file paths
+      auto expanded_paths = expand_wildcard_path(file.get<std::string>());
+      file_paths.insert(file_paths.end(), expanded_paths.begin(),
+                        expanded_paths.end());
+    }
   }
   auto &&[filechain, friend_chains] = ret;
   filechain = std::make_unique<TChain>();
@@ -33,13 +45,38 @@ prepare_chain(nlohmann::json &j) {
     filechain->AddFile(
         (file + "?#" + j["treename"].get<std::string>()).c_str());
   }
+
   for (auto &friend_tree : j["friend_trees"]) {
+    std::vector<std::string> file_paths_friend{};
+    if (j.find("files_friend") != j.end()) {
+      for (auto &file : j["files_friend"]) {
+        if (file[0] == '@') {
+          std::ifstream file_list(file.get<std::string>().substr(1));
+          std::string line;
+          while (std::getline(file_list, line)) {
+            file_paths_friend.emplace_back(line);
+          }
+        } else {
+          auto expanded_paths = expand_wildcard_path(file.get<std::string>());
+          file_paths_friend.insert(file_paths.end(), expanded_paths.begin(),
+                                   expanded_paths.end());
+        }
+      }
+      if (file_paths_friend.size() != file_paths.size()) {
+        throw std::runtime_error("Number of files in 'files_friend' must match "
+                                 "'files', quitting for safety.");
+      }
+    }
     auto &chain = friend_chains.emplace_back(std::make_unique<TChain>());
-    for (auto &file : file_paths) {
+    for (auto &file :
+         file_paths_friend.empty() ? file_paths : file_paths_friend) {
       chain->AddFile(
           (file + "?#" + friend_tree["treename"].get<std::string>()).c_str());
     }
-    filechain->AddFriend(chain.get(), friend_tree.value("alias", "").c_str());
+    filechain->AddFriend(
+        chain.get(),
+        friend_tree.value("alias", friend_tree["treename"].get<std::string>())
+            .c_str());
   }
   return ret;
 }
