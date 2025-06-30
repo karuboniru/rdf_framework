@@ -34,7 +34,8 @@ prepare_chain(nlohmann::json &j) {
       }
     } else {
       // Handle wildcard paths by expanding them to actual file paths
-      auto expanded_paths = expand_wildcard_path(file.get<std::string>());
+      auto expanded_paths =
+          ROOT::Internal::TreeUtils::ExpandGlob(file.get<std::string>());
       file_paths.insert(file_paths.end(), expanded_paths.begin(),
                         expanded_paths.end());
     }
@@ -57,7 +58,8 @@ prepare_chain(nlohmann::json &j) {
             file_paths_friend.emplace_back(line);
           }
         } else {
-          auto expanded_paths = expand_wildcard_path(file.get<std::string>());
+          auto expanded_paths =
+              ROOT::Internal::TreeUtils::ExpandGlob(file.get<std::string>());
           file_paths_friend.insert(file_paths.end(), expanded_paths.begin(),
                                    expanded_paths.end());
         }
