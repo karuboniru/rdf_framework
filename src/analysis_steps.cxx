@@ -25,7 +25,7 @@ prepare_chain(nlohmann::json &j) {
   // Process each file entry in the JSON configuration
   for (auto &file : j["files"]) {
     // Check if the file entry starts with '@' indicating a file list
-    if (file[0] == '@') {
+    if (file.get<std::string>()[0] == '@') {
       // Open the file list (removing the '@' prefix)
       std::ifstream file_list(file.get<std::string>().substr(1));
       std::string line;
@@ -51,7 +51,7 @@ prepare_chain(nlohmann::json &j) {
     std::vector<std::string> file_paths_friend{};
     if (j.find("files_friend") != j.end()) {
       for (auto &file : j["files_friend"]) {
-        if (file[0] == '@') {
+        if (file.get<std::string>()[0] == '@') {
           std::ifstream file_list(file.get<std::string>().substr(1));
           std::string line;
           while (std::getline(file_list, line)) {
