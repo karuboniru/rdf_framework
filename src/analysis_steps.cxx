@@ -378,18 +378,23 @@ void plugin_handle(TChain &ch, nlohmann::json &entry) {
       // Oh I want std::views::zip
       for (size_t index{}; index < hist1ds.size(); index++) {
         auto &hist = hist1ds[index];
-        // auto name = hist->GetName();
-        auto name =
-            std::visit([](auto &&hist_) { return hist_->GetName(); }, hist);
+        auto orig_hist_ptr = std::visit(
+            [](auto &&hist_) { return dynamic_cast<TH1 *>(hist_.GetPtr()); },
+            hist);
+        auto name = orig_hist_ptr->GetName();
         auto dir = file->mkdir(Form("d_%s", name));
         dir->cd();
         auto &variation = variations[index];
         std::visit(
             [&](auto variation_) {
-              for (auto &plots : variation_ | std::views::values) {
-                plots->Divide(std::visit(
-                    [](auto &&hist_) -> TH1 * { return hist_.GetPtr(); },
-                    hist));
+              for (auto &plots : variation_ | std::views::values |
+                                     std::views::filter([&](auto &&hist_) {
+                                       // skip if the histogram is the same as
+                                       // the original
+                                       return dynamic_cast<TH1 *>(
+                                                  hist_.get()) != orig_hist_ptr;
+                                     })) {
+                plots->Divide(orig_hist_ptr);
                 plots->Write();
               }
             },
