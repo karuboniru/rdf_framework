@@ -227,17 +227,18 @@ auto analysis_entry_handle(ROOT::RDF::RNode preprocessed_node,
 
 ROOT::RDF::RNode add_variation(ROOT::RDF::RNode df_in,
                                nlohmann::json &configuration) {
+  auto nvariations = configuration["count"].get<int>();
   return df_in.Define("__weight", []() { return 1.; })
       .Vary(
           "__weight",
-          [](const TArrayD &weights) {
+          [nvariations](const TArrayD &weights) {
             ROOT::RVecD ret{};
-            for (int i = 0; i < weights.GetSize(); ++i) {
+            for (int i = 0; i < nvariations; ++i) {
               ret.push_back(weights[i]);
             }
             return ret;
           },
-          {configuration["weight"]}, configuration["count"].get<int>());
+          {configuration["weight"]}, nvariations);
 }
 
 void plugin_handle(TChain &ch, nlohmann::json &entry) {
@@ -348,8 +349,11 @@ void plugin_handle(TChain &ch, nlohmann::json &entry) {
         std::variant<ROOT::RDF::Experimental::RResultMap<TH1D>,
                      ROOT::RDF::Experimental::RResultMap<TH2D>,
                      ROOT::RDF::Experimental::RResultMap<TH3D>>;
+    using job_t = std::tuple<std::string, std::vector<general_hist_result_t>,
+                             std::vector<general_var_result_t>>;
+    std::vector<job_t> jobs{};
 
-    for (auto &&[filename, hist1ds, variations] :
+    for (auto &&obj :
          analysis_result_handles | std::views::transform([](auto &&tup) {
            auto &&[filename, hist1ds, stacks, snapshot_action] = tup;
            auto range_vars =
@@ -366,6 +370,9 @@ void plugin_handle(TChain &ch, nlohmann::json &entry) {
            }
            return std::make_tuple(filename, hist1ds, variations);
          })) {
+      jobs.emplace_back(obj);
+    }
+    for (auto &&[filename, hist1ds, variations] : jobs) {
       auto file = std::make_unique<TFile>(filename.c_str(), "RECREATE");
       file->cd();
       // Oh I want std::views::zip
