@@ -228,17 +228,31 @@ auto analysis_entry_handle(ROOT::RDF::RNode preprocessed_node,
 ROOT::RDF::RNode add_variation(ROOT::RDF::RNode df_in,
                                nlohmann::json &configuration) {
   auto nvariations = configuration["count"].get<int>();
-  return df_in.Define("__weight", []() { return 1.; })
-      .Vary(
-          "__weight",
-          [nvariations](const TArrayD &weights) {
-            ROOT::RVecD ret{};
-            for (int i = 0; i < nvariations; ++i) {
-              ret.push_back(weights[i]);
-            }
-            return ret;
-          },
-          {configuration["weight"]}, nvariations);
+  try {
+    return df_in.Define("__weight", []() { return 1.; })
+        .Vary(
+            "__weight",
+            [nvariations](const TArrayD &weights) {
+              ROOT::RVecD ret{};
+              for (int i = 0; i < nvariations; ++i) {
+                ret.push_back(weights[i]);
+              }
+              return ret;
+            },
+            {configuration["weight"]}, nvariations);
+  } catch (...) {
+    return df_in.Define("__weight", []() { return 1.; })
+        .Vary(
+            "__weight",
+            [nvariations](const TArrayF &weights) {
+              ROOT::RVecD ret{};
+              for (int i = 0; i < nvariations; ++i) {
+                ret.push_back(weights[i]);
+              }
+              return ret;
+            },
+            {configuration["weight"]}, nvariations);
+  }
 }
 
 void plugin_handle(TChain &ch, nlohmann::json &entry) {
